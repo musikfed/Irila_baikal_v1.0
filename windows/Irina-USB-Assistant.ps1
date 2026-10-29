@@ -1,4 +1,4 @@
-# IRINA BAIKAL Windows USB assistant. Read-only checks; Rufus does the writing.
+﻿# IRINA BAIKAL Windows USB assistant. Read-only checks; Rufus does the writing.
 param([string]$Folder = 'F:\irinabaikal')
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
