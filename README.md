@@ -90,3 +90,14 @@ uv pip install --python .venv\Scripts\python.exe -r browser\requirements.txt
 - Для настоящей ОС с Read-Only корнем необходимо отдельное **постоянное хранилище `/home`** для документов, почты, паролей SIP и настроек; иначе OverlayFS в ОЗУ всё обнулит после перезагрузки.
 
 **Не является готовым загрузочным образом:** ядро, initramfs, системные сервисы и установка на внешний USB SSD требуют отдельной сборки и проверки.
+
+## Первый IMG-сборщик для пустого внешнего SSD 256 ГБ
+
+Сборщик предварительной версии добавлен: [scripts/build_irina_img.sh](scripts/build_irina_img.sh). Подробная пошаговая инструкция под Windows 11 Pro: [docs/BUILD_IMAGE_WINDOWS11.md](docs/BUILD_IMAGE_WINDOWS11.md).
+
+- Внешний USB SSD 256 ГБ уже очищен и без разделов: **отдельно форматировать его в Windows не нужно**.
+- Создать Ubuntu 24.04 VM (Hyper-V), установить debootstrap/GRUB, собрать новый файл `/srv/irina/irina_baikal_1.0.img` (`--full`, 16 GiB GPT/EFI/ext4), проверить через `scripts/test_irina_qemu.sh`, перенести IMG в Windows, проверить SHA256, записать **только на внешний** SSD через Rufus.
+- **MVP вместо финального ТЗ:** обычный ext4 RW root с постоянным DATA `/home`, обычный неподписанный GRUB, XFCE, Irina Shell и приложения. SquashFS+OverlayFS, Rust Secure Boot, Ollama/Qwen, шифрование DATA и полноценный Qt Browser не включены в сборщик v0.1.
+- Сборщик **ещё не выполнялся на полноценной Ubuntu VM**, физическая загрузка Acer не подтверждена. В GitHub Actions проверены синтаксис и безопасный отказ без прав, но не получен готовый IMG.
+- Внутренний диск Windows 11 Pro не трогать. Пароль `.img.login.txt` не публиковать. Для отключения Secure Boot перед тестом сначала сохранить Windows BitLocker recovery key.
+
