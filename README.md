@@ -31,6 +31,7 @@ F:\irinabaikal\irina_baikal_1.0.img.sha256
 ~~~
 
 - [Полная пошаговая инструкция Windows/WSL, проверка, IMG, Rufus/F12](docs/BUILD_WSL_F_DRIVE.md)
+- [Аудит безопасности и наполнения WSL-сборщика](docs/WSL_BUILD_AUDIT.md)
 - [Общая инструкция SquashFS/UEFI для Windows 11](docs/BUILD_READONLY_WINDOWS.md)
 - [Диагностика WSL без удаления проектов](docs/WSL_RECOVERY.md)
 - [Проверка контрольной суммы перед записью SSD](scripts/flash_irina.py)
