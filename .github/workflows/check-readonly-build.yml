@@ -168,6 +168,12 @@ jobs:
           if ($raw -notlike '*Get-FileHash*' -or $raw -notlike '*Win32_DiskDrive*') {
             throw 'Image SHA256 or external disk checker missing'
           }
+          if ($raw -notlike '*-NoProfile -STA*' -or $raw -notlike '*-SelfTest:*') {
+            throw 'Launcher must start one offline PowerShell GUI with self-test'
+          }
+          if ($raw -like '*diskpart*' -or $raw -like '*Clear-Disk*' -or $raw -like '*Format-Volume*') {
+            throw 'Read-only assistant must never contain disk formatting commands'
+          }
           if ($raw -like '*DownloadString*' -or $raw -like '*Invoke-WebRequest*' -or $raw -like '*WriteAllText*') {
             throw 'Unsafe self-updating network or file write in launcher'
           }
