@@ -1,0 +1,57 @@
+name: Validate read-only Irina image pipeline
+on:
+  push:
+    paths:
+      - 'scripts/prepare_source.sh'
+      - 'scripts/bake_image.sh'
+      - 'scripts/flash_irina.py'
+      - 'ai/hrag.py'
+      - '.github/workflows/check-readonly-build.yml'
+  pull_request:
+    paths:
+      - 'scripts/prepare_source.sh'
+      - 'scripts/bake_image.sh'
+      - 'scripts/flash_irina.py'
+      - 'ai/hrag.py'
+jobs:
+  syntax-and-safety:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Bash and Python syntax
+        run: |
+          bash -n scripts/prepare_source.sh
+          bash -n scripts/bake_image.sh
+          python -m py_compile scripts/flash_irina.py ai/hrag.py
+      - name: Help commands do not write images
+        run: |
+          bash scripts/prepare_source.sh --help
+          bash scripts/bake_image.sh --help
+          python scripts/flash_irina.py --help
+      - name: Refuse building without privileges
+        run: |
+          ! bash scripts/prepare_source.sh --stage /tmp/irina-do-not-create
+          test ! -e /tmp/irina-do-not-create
+          ! bash scripts/bake_image.sh --stage /tmp/not-existing --output /tmp/irina-do-not-create.img
+          test ! -e /tmp/irina-do-not-create.img
+      - name: Check image hash verifier on fake data (no disk writing)
+        run: |
+          python - <<'PY'
+          import hashlib, tempfile, sys
+          from pathlib import Path
+          sys.path.insert(0, "scripts")
+          import flash_irina
+          with tempfile.TemporaryDirectory() as directory:
+              img=Path(directory)/"test.img"
+              img.write_bytes(b"not-a-bootable-image")
+              digest=hashlib.sha256(img.read_bytes()).hexdigest()
+              Path(str(img)+".sha256").write_text(digest+"  test.img\n")
+              assert flash_irina.verify_checksum(img)==digest
+              img.write_bytes(b"corrupted")
+              try: flash_irina.verify_checksum(img)
+              except RuntimeError: pass
+              else: raise AssertionError("Hash mismatch was not detected")
+          PY
