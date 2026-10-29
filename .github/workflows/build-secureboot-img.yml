@@ -1,4 +1,4 @@
-name: Build Irina Baikal Secure Boot IMG
+name: Build Irina Baikal Secure Boot IMG (R2 Casper fix)
 
 # Separate experimental Secure Boot IMG; does not touch/overwrite the proven first image.
 # Only official signed Ubuntu boot components; NO private signing keys or secrets in repo.
@@ -53,6 +53,7 @@ jobs:
           free -h
           echo "This job ONLY builds a file image; it never accesses the Acer SSD."
           echo "Profile: $IMG_PROFILE; IMG size cap: $IMG_MAX_MIB MiB"
+          echo "R2: retain mandatory /dev /proc /sys /run /tmp /mnt /media in squashfs."
       - name: Install Linux image build tools
         run: |
           sudo apt-get update
@@ -85,15 +86,15 @@ jobs:
         run: |
           sudo bash scripts/prepare_source.sh --stage /srv/irina/rootfs "--$IMG_PROFILE"
           df -h /
-      - name: Bake separate signed-chain GPT EFI SquashFS image
+      - name: Bake Secure Boot R2 with Casper root mountpoint regression guard
         run: |
           sudo bash scripts/bake_image_secureboot.sh --stage /srv/irina/rootfs \
-            --output /srv/irina/irina_baikal_1.0_secureboot.img \
+            --output /srv/irina/irina_baikal_1.0_r2_secureboot.img \
             --signed-assets /tmp/irina-secure-boot-assets \
             --max-image-mib "$IMG_MAX_MIB"
           cd /srv/irina
-          sha256sum -c irina_baikal_1.0_secureboot.img.sha256
-          ls -lh irina_baikal_1.0_secureboot.img irina_baikal_1.0_secureboot.img.sha256
+          sha256sum -c irina_baikal_1.0_r2_secureboot.img.sha256
+          ls -lh irina_baikal_1.0_r2_secureboot.img irina_baikal_1.0_r2_secureboot.img.sha256
       - name: Remove build rootfs to free artifact staging space
         if: success()
         run: |
@@ -104,15 +105,15 @@ jobs:
           # The image was created by root in /srv/irina. GNU mv tries to
           # unlink the root-owned source directory and fails as 'runner'.
           # Copy readable files instead, then verify the COPIED IMG.
-          sudo chmod 644 /srv/irina/irina_baikal_1.0_secureboot.img /srv/irina/irina_baikal_1.0_secureboot.img.sha256
+          sudo chmod 644 /srv/irina/irina_baikal_1.0_r2_secureboot.img /srv/irina/irina_baikal_1.0_r2_secureboot.img.sha256
           mkdir -p output
-          cp -- /srv/irina/irina_baikal_1.0_secureboot.img output/
-          cp -- /srv/irina/irina_baikal_1.0_secureboot.img.sha256 output/
-          ( cd output && sha256sum -c irina_baikal_1.0_secureboot.img.sha256 )
-          ls -lh output/irina_baikal_1.0_secureboot.img output/irina_baikal_1.0_secureboot.img.sha256
+          cp -- /srv/irina/irina_baikal_1.0_r2_secureboot.img output/
+          cp -- /srv/irina/irina_baikal_1.0_r2_secureboot.img.sha256 output/
+          ( cd output && sha256sum -c irina_baikal_1.0_r2_secureboot.img.sha256 )
+          ls -lh output/irina_baikal_1.0_r2_secureboot.img output/irina_baikal_1.0_r2_secureboot.img.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: irina-baikal-1.0-secureboot-img
+          name: irina-baikal-1.0-secureboot-r2-img
           path: output/
           if-no-files-found: error
           compression-level: 1
