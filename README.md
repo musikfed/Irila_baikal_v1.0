@@ -1,3 +1,17 @@
+# Запуск сборки IMG через установленную Ubuntu WSL2 в Windows 11 Pro
+
+**Основной локальный маршрут:** [windows/Build-IrinaViaWSL.ps1](windows/Build-IrinaViaWSL.ps1) — Windows PowerShell-команда для сборки файла `irina_baikal_1.0.img` внутри WSL2 Ubuntu 24.04 с копированием на `F:\irinabaikal`. Скрипт проверяет Linux ext4, свободное место и то, что F: не похож на целевой внешний SSD 256 ГБ. Физические диски не форматирует.
+
+Из PowerShell в корне клонированного репозитория:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\windows\Build-IrinaViaWSL.ps1" -Distro Ubuntu-24.04
+```
+
+Если WSL Ubuntu физически должна храниться на F:, сначала [создай её отдельную копию IrinaBuilder](windows/Prepare-IrinaBuilderOnF.ps1), затем запусти тот же сценарий с `-Distro IrinaBuilder`. **Пошаговая инструкция**: [docs/BUILD_WSL_F_DRIVE.md](docs/BUILD_WSL_F_DRIVE.md). Готовый IMG до полной сборки и реальной проверки Acer не считается релизом.
+
+---
+
 # Сборка на существующей Ubuntu WSL2 с рабочими файлами на F:
 
 Для Acer Windows 11 Pro уже установлен ярлык Ubuntu-24.04. Отдельную VM и повторную установку Python не требуем. Все файлы сборки можно держать в отдельной **WSL2 ext4.vhdx на F:**, а готовый IMG — в `F:\irinabaikal`.
