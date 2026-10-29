@@ -1,0 +1,26 @@
+name: Validate Ubuntu image builder
+on:
+  push:
+    paths:
+      - 'scripts/build_irina_img.sh'
+      - 'scripts/test_irina_qemu.sh'
+      - '.github/workflows/check-builder.yml'
+  pull_request:
+    paths:
+      - 'scripts/build_irina_img.sh'
+      - 'scripts/test_irina_qemu.sh'
+jobs:
+  syntax:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bash syntax
+        run: |
+          bash -n scripts/build_irina_img.sh
+          bash -n scripts/test_irina_qemu.sh
+      - name: Verify documentation / help
+        run: bash scripts/build_irina_img.sh --help
+      - name: Refuse non-root invocation without creating any image
+        run: |
+          ! bash scripts/build_irina_img.sh --output /tmp/irina-test-should-not-exist.img --yes
+          test ! -e /tmp/irina-test-should-not-exist.img
