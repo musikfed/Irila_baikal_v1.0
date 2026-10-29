@@ -8,6 +8,7 @@
   <title>Ирина Байкал 1.0 · Irina Shell</title>
   <link rel="icon" href="assets/irina-mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
+  <script src="i18n.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body data-theme="lake">
@@ -15,9 +16,13 @@
   <header class="topbar">
     <div class="brand-mini"><img src="assets/irina-mark.svg" alt="" width="30" height="30"><span>Ирина <b>Байкал</b> <small>1.0</small></span></div>
     <div class="topbar-middle">PegiNelab OS <span class="live-dot"></span> Локальный рабочий стол</div>
-    <button id="quick-toggle" type="button" class="topbar-clock" aria-expanded="false" aria-controls="quick-settings">
+    <div class="topbar-actions">
+    <button id="language-toggle" type="button" class="locale-button" title="Switch interface to English" aria-label="Язык интерфейса">EN</button>
+    <button id="keyboard-help" type="button" class="locale-button" title="Раскладка клавиатуры" aria-label="Раскладка клавиатуры">⌨ RU / EN</button>
+    <button id="quick-toggle" type="button" class="topbar-clock aria-expanded="false" aria-controls="quick-settings">
       <span id="clock-time">--:--</span><span id="clock-date">--</span><span aria-hidden="true">⌄</span>
     </button>
+    </div>
   </header>
   <main id="desktop" aria-label="Рабочий стол">
     <section class="welcome" aria-label="Приветствие">
@@ -34,6 +39,8 @@
       <button type="button" data-app="video"><span class="app-icon">▣</span><span>ВКС</span></button>
       <button type="button" data-app="files"><span class="app-icon">▤</span><span>Файлы</span></button>
       <button type="button" data-app="settings"><span class="app-icon">⚙</span><span>Параметры</span></button>
+      <button type="button" data-app="mail"><span class="app-icon">✉</span><span>Почта</span></button>
+      <button type="button" data-app="sip"><span class="app-icon">☎</span><span>SIP-телефон</span></button>
     </nav>
   </main>
 
@@ -48,18 +55,25 @@
       <button type="button" data-app="internet"><span>◎</span>Интернет</button>
       <button type="button" data-app="files"><span>▤</span>Файлы</button>
       <button type="button" data-app="settings"><span>⚙</span>Настройки</button>
+      <button type="button" data-app="suite"><span>▤</span>Офис и графика</button>
+      <button type="button" data-app="mail"><span>✉</span>Почта</button>
+      <button type="button" data-app="sip"><span>☎</span>SIP-телефон</button>
+      <button type="button" data-app="games"><span>♟</span>Мини-игры</button>
     </div>
     <div class="launcher-bottom">Acer Swift 3 · Ryzen 5 3500U · Vega 8</div>
   </aside>
 
   <aside id="quick-settings" class="popover quick-settings" hidden aria-label="Быстрые настройки">
     <strong>Оформление системы</strong>
+    <small class="muted-line">Язык интерфейса: RU / EN</small>
+    <small class="muted-line">Windows: Win + Пробел · Ubuntu XFCE/X11: Alt + Shift</small>
     <div class="theme-swatches">
       <button type="button" class="theme-swatch lake-swatch" data-theme="lake" aria-label="Сине-зелёная тема"></button>
       <button type="button" class="theme-swatch forest-swatch" data-theme="forest" aria-label="Зелёная тема"></button>
       <button type="button" class="theme-swatch night-swatch" data-theme="night" aria-label="Ночная тема"></button>
     </div>
     <button type="button" class="quick-action" data-app="camera">◉ Круглая камера</button>
+    <button type="button" class="quick-action" data-cmd="camera-visibility">◉ Показать / скрыть круг</button>
     <button type="button" class="quick-action" data-app="settings">⚙ Все параметры</button>
   </aside>
 
@@ -82,6 +96,8 @@
     <button type="button" class="dock-app" data-app="video" title="Видеосвязь">▣</button>
     <button type="button" class="dock-app" data-app="camera" title="Селфи">◉</button>
     <button type="button" class="dock-app" data-app="files" title="Файлы">▤</button>
+    <button type="button" class="dock-app" data-app="mail" title="Почта">✉</button>
+    <button type="button" class="dock-app" data-app="sip" title="SIP-телефон">☎</button>
     <span class="dock-divider" aria-hidden="true"></span>
     <button type="button" class="dock-app" data-app="settings" title="Параметры">⚙</button>
   </footer>
