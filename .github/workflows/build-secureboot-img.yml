@@ -1,0 +1,115 @@
+name: Build Irina Baikal Secure Boot IMG
+
+# Separate experimental Secure Boot IMG; does not touch/overwrite the proven first image.
+# Only official signed Ubuntu boot components; NO private signing keys or secrets in repo.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/build-secureboot-img.yml'
+      - 'scripts/prepare_source.sh'
+      - 'scripts/bake_image_secureboot.sh'
+      - 'scripts/check_wsl_loop.sh'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Core is most likely to fit 5 GiB; full includes office, graphics, mail and SIP'
+        required: true
+        default: core
+        type: choice
+        options:
+          - core
+          - full
+      max_mib:
+        description: 'Maximum raw image size in MiB (5120=5 GiB; full may need 8192)'
+        required: true
+        default: '5120'
+        type: choice
+        options:
+          - '5120'
+          - '8192'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: irina-secureboot-img-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      IMG_PROFILE: ${{ inputs.profile || 'core' }}
+      IMG_MAX_MIB: ${{ inputs.max_mib || '5120' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check available disk space
+        run: |
+          df -h /
+          free -h
+          echo "This job ONLY builds a file image; it never accesses the Acer SSD."
+          echo "Profile: $IMG_PROFILE; IMG size cap: $IMG_MAX_MIB MiB"
+      - name: Install Linux image build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debootstrap ubuntu-keyring rsync squashfs-tools \
+            parted gdisk dosfstools e2fsprogs util-linux udev mount \
+            grub-efi-amd64-bin grub-common sbsigntool python3
+      - name: Check loop/GPT support on a temporary image before heavy build
+        run: |
+          sudo bash scripts/check_wsl_loop.sh
+          df -h /
+      - name: Extract current Ubuntu-signed EFI binaries without installing a bootloader on runner
+        run: |
+          mkdir -p /tmp/irina-signing-debs /tmp/irina-secure-boot-assets
+          cd /tmp/irina-signing-debs
+          apt-get download shim-signed grub-efi-amd64-signed
+          for deb in ./*.deb; do
+            dpkg-deb --extract "$deb" /tmp/irina-secure-boot-assets
+          done
+          test -s /tmp/irina-secure-boot-assets/usr/lib/shim/shimx64.efi.signed.latest
+          test -s /tmp/irina-secure-boot-assets/usr/lib/shim/mmx64.efi
+          test -s /tmp/irina-secure-boot-assets/usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed
+          for f in             /tmp/irina-secure-boot-assets/usr/lib/shim/shimx64.efi.signed.latest             /tmp/irina-secure-boot-assets/usr/lib/shim/mmx64.efi             /tmp/irina-secure-boot-assets/usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed; do
+            sbverify --list "$f"
+          done
+      - name: Prepare Ubuntu 24.04 stage with casper
+        run: |
+          sudo bash scripts/prepare_source.sh --stage /srv/irina/rootfs "--$IMG_PROFILE"
+          df -h /
+      - name: Bake separate signed-chain GPT EFI SquashFS image
+        run: |
+          sudo bash scripts/bake_image_secureboot.sh --stage /srv/irina/rootfs \
+            --output /srv/irina/irina_baikal_1.0_secureboot.img \
+            --signed-assets /tmp/irina-secure-boot-assets \
+            --max-image-mib "$IMG_MAX_MIB"
+          cd /srv/irina
+          sha256sum -c irina_baikal_1.0_secureboot.img.sha256
+          ls -lh irina_baikal_1.0_secureboot.img irina_baikal_1.0_secureboot.img.sha256
+      - name: Remove build rootfs to free artifact staging space
+        if: success()
+        run: |
+          sudo rm -rf /srv/irina/rootfs
+          df -h /
+      - name: Prepare downloadable files
+        run: |
+          # The image was created by root in /srv/irina. GNU mv tries to
+          # unlink the root-owned source directory and fails as 'runner'.
+          # Copy readable files instead, then verify the COPIED IMG.
+          sudo chmod 644 /srv/irina/irina_baikal_1.0_secureboot.img /srv/irina/irina_baikal_1.0_secureboot.img.sha256
+          mkdir -p output
+          cp -- /srv/irina/irina_baikal_1.0_secureboot.img output/
+          cp -- /srv/irina/irina_baikal_1.0_secureboot.img.sha256 output/
+          ( cd output && sha256sum -c irina_baikal_1.0_secureboot.img.sha256 )
+          ls -lh output/irina_baikal_1.0_secureboot.img output/irina_baikal_1.0_secureboot.img.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: irina-baikal-1.0-secureboot-img
+          path: output/
+          if-no-files-found: error
+          compression-level: 1
+          retention-days: 30
