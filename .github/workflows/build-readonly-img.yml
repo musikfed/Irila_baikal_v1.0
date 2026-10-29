@@ -1,6 +1,17 @@
 name: Build Irina Baikal read-only IMG
 
+# Real build on GitHub cloud runner; local Windows WSL is optional.
+# On main, rebuild only when the image pipeline/workflow changes. Also supports manual Run workflow.
+
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/build-readonly-img.yml'
+      - 'scripts/prepare_source.sh'
+      - 'scripts/bake_image.sh'
+      - 'scripts/check_wsl_loop.sh'
   workflow_dispatch:
     inputs:
       profile:
@@ -23,6 +34,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: irina-img-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-image:
     runs-on: ubuntu-24.04
@@ -38,6 +53,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y debootstrap ubuntu-keyring rsync squashfs-tools             parted gdisk dosfstools e2fsprogs util-linux grub-efi-amd64-bin             grub-common python3
+      - name: Check loop/GPT support on a temporary image before heavy build
+        run: |
+          sudo bash scripts/check_wsl_loop.sh
+          df -h /
       - name: Prepare Ubuntu 24.04 stage with casper
         run: |
           sudo bash scripts/prepare_source.sh --stage /srv/irina/rootfs --${{ inputs.profile }}
