@@ -1,32 +1,44 @@
-# Запуск сборки IMG через установленную Ubuntu WSL2 в Windows 11 Pro
+# PegiNelab OS — «Ирина Байкал 1.0»
 
-**Исправленный запуск v2.1 (ошибка `bash -lc conditional binary operator expected`):** использовать новый файл [windows/Build-IrinaViaWSL-v2.ps1](windows/Build-IrinaViaWSL-v2.ps1), сначала с параметром `-CheckOnly` для безопасной проверки, затем без него. Это обходит кеширование старой версии `Build-IrinaViaWSL.ps1`. [Пошаговые команды](docs/BUILD_WSL_F_DRIVE.md#исправление-ошибки-ubuntu--c-line-3-conditional-binary-operator-expected).
+## Основной способ создания IMG: Windows 11 + установленная Ubuntu 24.04 в WSL2
 
+**Обновлено 29 октября 2026.** Для Acer Swift 3 SF314-41 WSL2 уже установлен, Ubuntu-24.04 запускается, DNS и HTTPS archive.ubuntu.com работают. Папка для результата — **F:\irinabaikal** (свободно ~253 ГиБ). **Не устанавливать вторую Ubuntu, не копировать и не удалять существующий WSL-дистрибутив.**
 
+**Используйте только [исправленный PowerShell-сценарий v2.1](windows/Build-IrinaViaWSL-v2.ps1)**. Старый windows/Build-IrinaViaWSL.ps1 вызывал ошибку «Ubuntu: -c: line 3: conditional binary operator expected» из-за передачи Bash-условий из PowerShell. Не используйте старую версию файла, даже если она осталась на F:.
 
-**Основной локальный маршрут:** [windows/Build-IrinaViaWSL.ps1](windows/Build-IrinaViaWSL.ps1) — Windows PowerShell-команда для сборки файла `irina_baikal_1.0.img` внутри WSL2 Ubuntu 24.04 с копированием на `F:\irinabaikal`. Скрипт проверяет Linux ext4, свободное место и то, что F: не похож на целевой внешний SSD 256 ГБ. Физические диски не форматирует.
+В **PowerShell Windows 11** (подойдёт PS C:\WINDOWS\system32):
 
-Из PowerShell в корне клонированного репозитория:
+~~~powershell
+Invoke-WebRequest "https://raw.githubusercontent.com/musikfed/Irila_baikal_v1.0/main/windows/Build-IrinaViaWSL-v2.ps1" -OutFile "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1"
+Select-String -Path "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Pattern "IRINA WSL BUILDER v2.1", "--exec /bin/bash"
+Get-Content "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Distro Ubuntu-24.04 -CheckOnly
+~~~
 
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\windows\Build-IrinaViaWSL.ps1" -Distro Ubuntu-24.04
-```
+Ожидается **PASS: Ubuntu 24.04 + WSL2 + Linux ext4 staging + F: output** и **CHECK-ONLY PASS**. Только после этого начать реальную сборку:
 
-Если WSL Ubuntu физически должна храниться на F:, сначала [создай её отдельную копию IrinaBuilder](windows/Prepare-IrinaBuilderOnF.ps1), затем запусти тот же сценарий с `-Distro IrinaBuilder`. **Пошаговая инструкция**: [docs/BUILD_WSL_F_DRIVE.md](docs/BUILD_WSL_F_DRIVE.md). Готовый IMG до полной сборки и реальной проверки Acer не считается релизом.
+~~~powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Distro Ubuntu-24.04 -Profile core
+~~~
 
----
+На вопрос о начале сборки ввести **BUILD-IRINA**. После **успешного** завершения появятся два файла:
 
-# Сборка на существующей Ubuntu WSL2 с рабочими файлами на F:
+~~~text
+F:\irinabaikal\irina_baikal_1.0.img
+F:\irinabaikal\irina_baikal_1.0.img.sha256
+~~~
 
-Для Acer Windows 11 Pro уже установлен ярлык Ubuntu-24.04. Отдельную VM и повторную установку Python не требуем. Все файлы сборки можно держать в отдельной **WSL2 ext4.vhdx на F:**, а готовый IMG — в `F:\irinabaikal`.
+- [Полная пошаговая инструкция Windows/WSL, проверка, IMG, Rufus/F12](docs/BUILD_WSL_F_DRIVE.md)
+- [Общая инструкция SquashFS/UEFI для Windows 11](docs/BUILD_READONLY_WINDOWS.md)
+- [Диагностика WSL без удаления проектов](docs/WSL_RECOVERY.md)
+- [Проверка контрольной суммы перед записью SSD](scripts/flash_irina.py)
+- [GitHub Actions — альтернативная облачная сборка](.github/workflows/build-readonly-img.yml)
 
-- [Пошаговая инструкция: Windows + Ubuntu WSL2 на F:](docs/BUILD_WSL_F_DRIVE.md).
-- [Windows безопасная копия Ubuntu WSL2 на F:](windows/Prepare-IrinaBuilderOnF.ps1). Исходный дистрибутив WSL не удаляется.
-- [Проверка loop/GPT без физических дисков](scripts/check_wsl_loop.sh).
-- [Одна команда сборки и проверенного копирования на F:](scripts/build_in_wsl.sh).
-- [Статус автоматических синтаксических тестов](.github/workflows/check-readonly-build.yml).
+**Где хранятся данные:** промежуточные rootfs и IMG создаются на Linux ext4 существующей Ubuntu WSL в /srv/irina; готовый IMG и SHA256 копируются на F:. Отображаемые WSL 940 ГБ — виртуальная ёмкость, проверьте реальное место диска с VHDX. Установка сборочных Linux-пакетов меняет конфигурацию WSL, однако не должна удалять другие проекты — заранее сделайте резервные копии важных данных.
 
-**Условие:** F: должен быть отдельным от целевого пустого M.2 SSD 256 ГБ накопителем, NTFS, с достаточным свободным местом. **Тест реальной сборки и загрузка Acer ещё не подтверждены**.
+**Безопасность:** до проверки IMG и SHA256 **не записывать ничего на физические диски**. Внешний USB M.2 SSD 256 ГБ (~238,46 ГиБ в Windows) — только цель будущего ручного выбора в Rufus; внутренний NVMe ~512 ГБ Windows, D: и F: не форматировать. Для первого UEFI-теста через F12 может понадобиться учесть Secure Boot; сначала сохранить BitLocker recovery key.
+
+**Статус:** исправленный PowerShell и проверочные скрипты прошли CI, но полная сборка на Acer и фактическая загрузка ещё не подтверждены. В первой версии GRUB неподписанный, RAM OverlayFS без постоянного DATA, без готовой Qwen 8B.
 
 ---
 
@@ -79,7 +91,7 @@ SSD уже пустой: дополнительное форматировани
 ## Как задумано
 
 - База — **Ubuntu 24.04 LTS** в минимальной сборке, позже можно перейти на 26.04 LTS.
-- Собирается внутри **Ubuntu 24.04 VM на Windows 11 Pro / Hyper-V**, затем сохраняется в `irina_baikal_1.0.img`.
+- **ИСТОРИЧЕСКИЙ вариант (не основной):** собирается внутри Ubuntu 24.04 VM на Windows 11 Pro / Hyper-V, затем сохраняется в `irina_baikal_1.0.img`.
 - IMG уже содержит **GPT**, `EFI (FAT32)`, системный `ext4` с файлом `SquashFS`: предварительное форматирование SSD в Windows **не нужно**.
 - Загрузка: экспериментальный UEFI Rust → проверенное ядро/initramfs → SquashFS только чтение + OverlayFS в RAM → XFCE → локальный Ollama + Hrag.
 - Оформление: лицензированное фото озера Байкал, название «Ирина Байкал 1.0».
@@ -163,7 +175,9 @@ uv pip install --python .venv\Scripts\python.exe -r browser\requirements.txt
 
 **Не является готовым загрузочным образом:** ядро, initramfs, системные сервисы и установка на внешний USB SSD требуют отдельной сборки и проверки.
 
-## Первый IMG-сборщик для пустого внешнего SSD 256 ГБ
+## УСТАРЕВШИЙ прототип IMG-сборщика (16 GiB RW / VM; НЕ использовать для WSL SquashFS)
+
+> Этот раздел сохранён только как история разработки. Актуальные команды для Acer находятся в начале README.
 
 Сборщик предварительной версии добавлен: [scripts/build_irina_img.sh](scripts/build_irina_img.sh). Подробная пошаговая инструкция под Windows 11 Pro: [docs/BUILD_IMAGE_WINDOWS11.md](docs/BUILD_IMAGE_WINDOWS11.md).
 
