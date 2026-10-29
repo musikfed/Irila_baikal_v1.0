@@ -7,6 +7,7 @@ on:
       - 'scripts/flash_irina.py'
       - 'scripts/check_wsl_loop.sh'
       - 'scripts/build_in_wsl.sh'
+      - 'tests/test_readonly_pipeline.py'
       - 'windows/Prepare-IrinaBuilderOnF.ps1'
       - 'windows/Build-IrinaViaWSL.ps1'
       - 'windows/Build-IrinaViaWSL-v2.ps1'
@@ -34,6 +35,9 @@ jobs:
           bash -n scripts/check_wsl_loop.sh
           bash -n scripts/build_in_wsl.sh
           python -m py_compile scripts/flash_irina.py ai/hrag.py
+      - name: Check portable SHA256 and Windows WSL script dependencies
+        run: |
+          python3 -m unittest discover -s tests -p 'test_readonly_pipeline.py' -v
       - name: Help commands do not write images
         run: |
           bash scripts/prepare_source.sh --help
@@ -75,7 +79,7 @@ jobs:
               p = subprocess.run(["bash", "-n"], input=snippet, capture_output=True, text=True)
               assert p.returncode == 0, f"{variable} bash syntax failure: {p.stderr}"
           latest = Path("windows/Build-IrinaViaWSL-v2.ps1").read_text(encoding="utf-8")
-          assert 'IRINA WSL BUILDER v2.1' in latest
+          assert 'IRINA WSL BUILDER v2.2' in latest
           assert '--exec /bin/bash $linuxFile' in latest
           assert 'CHECK-ONLY PASS.' in latest
           assert '-- bash -lc $preflight' not in latest
