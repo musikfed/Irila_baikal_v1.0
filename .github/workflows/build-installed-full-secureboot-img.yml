@@ -1,0 +1,137 @@
+name: Build Irina Baikal FULL Installed Secure Boot
+
+# A NEW installed writable-ext4 image, distinct from all original Live images.
+# USB SSD partition table is embedded in IMG; CI never accesses physical drives.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/build-installed-full-secureboot-img.yml'
+      - 'scripts/prepare_installed_source.sh'
+      - 'scripts/bake_image_installed_secureboot.sh'
+      - 'scripts/irina_grow_usb_root.sh'
+      - 'scripts/irina_auto_provision.sh'
+      - 'ui/irina_setup_status.py'
+      - 'audio/play_intro.sh'
+      - 'ui/web/assets/irina_intro.mp3'
+      - 'scripts/prepare_source.sh'
+      - 'hardware/acer_swift3_sf314-41.json'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'FULL: all verified desktop apps preinstalled; CORE optional smaller'
+        required: true
+        default: full
+        type: choice
+        options:
+          - core
+          - full
+      max_mib:
+        description: 'Maximum raw image size MiB (8192=8 GiB, USB expands after first boot)'
+        required: true
+        default: '12288'
+        type: choice
+        options:
+          - '8192'
+          - '12288'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: irina-installed-full-img-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      IMG_PROFILE: ${{ inputs.profile || 'full' }}
+      IMG_MAX_MIB: ${{ inputs.max_mib || '12288' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check available disk space
+        run: |
+          df -h /
+          free -h
+          echo "This job ONLY builds a file image; it never accesses the Acer SSD."
+          echo "Profile: $IMG_PROFILE; IMG size cap: $IMG_MAX_MIB MiB"
+          echo "INSTALLED: writable ext4 root, no Casper, official signed Ubuntu chain."
+          echo "The IMG is only a FILE; physical USB SSD is written later by Rufus on Windows."
+      - name: Install Linux image build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debootstrap ubuntu-keyring rsync squashfs-tools \
+            parted gdisk dosfstools e2fsprogs util-linux udev mount \
+            grub-efi-amd64-bin grub-common sbsigntool python3
+      - name: Check loop/GPT support on a temporary image before heavy build
+        run: |
+          sudo bash scripts/check_wsl_loop.sh
+          df -h /
+      - name: Extract current Ubuntu-signed EFI binaries without installing a bootloader on runner
+        run: |
+          mkdir -p /tmp/irina-signing-debs /tmp/irina-secure-boot-assets
+          cd /tmp/irina-signing-debs
+          apt-get download shim-signed grub-efi-amd64-signed
+          for deb in ./*.deb; do
+            dpkg-deb --extract "$deb" /tmp/irina-secure-boot-assets
+          done
+          test -s /tmp/irina-secure-boot-assets/usr/lib/shim/shimx64.efi.dualsigned
+          test -s /tmp/irina-secure-boot-assets/usr/lib/shim/mmx64.efi
+          test -s /tmp/irina-secure-boot-assets/usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed
+          for f in \
+            /tmp/irina-secure-boot-assets/usr/lib/shim/shimx64.efi.dualsigned \
+            /tmp/irina-secure-boot-assets/usr/lib/shim/mmx64.efi \
+            /tmp/irina-secure-boot-assets/usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed; do
+            sbverify --list "$f"
+          done
+          sbverify --list /tmp/irina-secure-boot-assets/usr/lib/shim/shimx64.efi.dualsigned | grep -Eq 'signature 2'
+      - name: Prepare installed Ubuntu root (Acer hardware profile, no Casper)
+        run: |
+          sudo bash scripts/prepare_installed_source.sh --stage /srv/irina/rootfs "--$IMG_PROFILE"
+          df -h /
+      - name: Verify offline-ready Acer drivers, office, media, mail and SIP packages
+        run: |
+          for pkg in linux-image-generic linux-firmware network-manager \
+            xfce4-screenshooter libreoffice-writer libreoffice-calc libreoffice-impress \
+            libreoffice-draw libreoffice-base gimp inkscape thunderbird \
+            linphone-desktop aisleriot gnome-mines gnome-mahjongg; do
+            dpkg_status="$(sudo chroot /srv/irina/rootfs dpkg-query -W -f='\${Status}' "$pkg")"
+            test "$dpkg_status" = "install ok installed" || { echo "MISSING: $pkg ($dpkg_status)" >&2; exit 1; }
+            echo "PASS INSTALLED: $pkg"
+          done
+          sudo chroot /srv/irina/rootfs dpkg-query -W -f='\${binary:Package}\t\${Version}\n' | sort > /tmp/irina_full_packages.txt
+          wc -l /tmp/irina_full_packages.txt
+      - name: Bake signed UEFI + writable ext4 installed SSD image
+        run: |
+          sudo bash scripts/bake_image_installed_secureboot.sh --stage /srv/irina/rootfs \
+            --output /srv/irina/irina_baikal_1.0_full_installed_secureboot.img \
+            --signed-assets /tmp/irina-secure-boot-assets \
+            --max-image-mib "$IMG_MAX_MIB"
+          cd /srv/irina
+          sha256sum -c irina_baikal_1.0_full_installed_secureboot.img.sha256
+          ls -lh irina_baikal_1.0_full_installed_secureboot.img irina_baikal_1.0_full_installed_secureboot.img.sha256
+      - name: Remove build rootfs to free artifact staging space
+        if: success()
+        run: |
+          sudo rm -rf /srv/irina/rootfs
+          df -h /
+      - name: Stage IMG without duplicating 8 GiB on GitHub runner
+        run: |
+          mkdir -p output
+          sudo mv /srv/irina/irina_baikal_1.0_full_installed_secureboot.img output/
+          sudo mv /srv/irina/irina_baikal_1.0_full_installed_secureboot.img.sha256 output/
+          cp /tmp/irina_full_packages.txt output/installed-packages.txt
+          sudo chown "$(id -u):$(id -g)" output/*
+          ( cd output && sha256sum -c irina_baikal_1.0_full_installed_secureboot.img.sha256 )
+          ls -lh output/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: irina-baikal-1.0-full-installed-secureboot-img
+          path: output/
+          if-no-files-found: error
+          compression-level: 1
+          retention-days: 30
