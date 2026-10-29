@@ -39,11 +39,44 @@
     internet:{title:'◎ Интернет',html:`<h2>Открыть сайт</h2><p>Введи адрес сайта. Он откроется в новой вкладке браузера.</p><form id="browser-form"><label for="browser-url">Адрес URL</label><input class="field" id="browser-url" type="url" placeholder="https://example.org" value="https://" required><button class="primary-button" type="submit">Открыть ↗</button></form><p class="hint">Hrag-пересказ страниц будет добавлен в следующем этапе.</p>`},
     files:{title:'▤ Мои файлы',html:`<h2>Локальные файлы</h2><p>В этой демонстрационной оболочке можно выбрать файлы для просмотра имён и размеров. Данные не отправляются на сервер.</p><label for="file-picker">Выбрать файлы</label><input class="field" id="file-picker" type="file" multiple><ul id="file-list" class="file-list"></ul><p class="hint">Полноценный файловый менеджер будет подключён в Ubuntu-версии.</p>`},
     settings:{title:'⚙ Параметры',html:`<h2>Оформление Ирины</h2><p>Окна в сине-зелёной гамме, всплывающее меню, собственная панель задач и круглая камера.</p><h3>Цветовая тема</h3><div class="button-row"><button class="glass-button" type="button" data-theme="lake">🌊 Байкал</button><button class="glass-button" type="button" data-theme="forest">🌿 Тайга</button><button class="glass-button" type="button" data-theme="night">☾ Ночь</button></div><div class="card-row"><div class="mini-card"><strong>Acer</strong><small>Ryzen 5 3500U · Vega 8</small></div><div class="mini-card"><strong>20 ГБ</strong><small>ОЗУ · по заявленному профилю</small></div></div><p class="hint" style="margin-top:16px">Обои — оригинальная стилизованная иллюстрация Байкала. Настоящую фотографию добавим после выбора изображения с подходящей лицензией.</p>`}
+    ,
+    suite: {title:'▤ Офис и графика',html:[
+      '<h2>Бесплатные программы</h2><p>Выбирай программу. На Ubuntu она запускается, если установлена. В Windows это предварительный просмотр меню.</p>',
+      '<h3>LibreOffice</h3><div class="native-grid">',
+      '<button type="button" data-launch="writer">▤ Writer · Текстовые документы</button>',
+      '<button type="button" data-launch="calc">▤ Calc · Таблицы</button>',
+      '<button type="button" data-launch="impress">▤ Impress · Презентации</button>',
+      '<button type="button" data-launch="draw">▤ Draw · Рисунки и схемы</button>',
+      '<button type="button" data-launch="base">▤ Base · Базы данных</button>',
+      '</div><h3>Графика</h3><div class="native-grid">',
+      '<button type="button" data-launch="gimp">◫ GIMP · Редактор фото</button>',
+      '<button type="button" data-launch="inkscape">◇ Inkscape · Векторная графика</button>',
+      '</div><p class="status-line native-status" aria-live="polite"></p>'
+    ].join('')},
+    mail: {title:'Ирина Байкал · Почта',html:[
+      '<h2>Универсальная почта</h2>',
+      '<p>Thunderbird поддерживает несколько почтовых аккаунтов с IMAP/POP3/SMTP. Учётные данные хранятся в профиле Thunderbird, не в Irina Shell.</p>',
+      '<button type="button" class="primary-button" data-launch="mail">✉ Открыть почту</button>',
+      '<p class="status-line native-status" aria-live="polite"></p>'
+    ].join('')},
+    sip: {title:'Ирина Байкал · Телефон',html:[
+      '<h2>Цифровая телефония SIP</h2>',
+      '<p>Linphone — бесплатный SIP-клиент. Для звонков нужен SIP-аккаунт от провайдера или собственная АТС. Asterisk — сервер, а не обязательный клиент.</p>',
+      '<button type="button" class="primary-button" data-launch="sip">☎ Открыть SIP-клиент</button>',
+      '<p class="status-line native-status" aria-live="polite"></p>'
+    ].join('')},
+    games: {title:'Ирина Байкал · Игры',html:[
+      '<h2>Мини-игры без рекламы</h2><p>Небольшие свободные игры для отдыха. Устанавливаются отдельно в Ubuntu.</p>',
+      '<div class="native-grid"><button type="button" data-launch="solitaire">♠ Пасьянс</button>',
+      '<button type="button" data-launch="mines">▧ Сапёр</button>',
+      '<button type="button" data-launch="mahjongg">▦ Маджонг</button></div>',
+      '<p class="status-line native-status" aria-live="polite"></p>'
+    ].join('')}
   };
   function openApp(id) {
     const t = templates[id]; if (!t) return;
     closePopovers();
-    if (id === 'camera') bubble.hidden = false;
+    if (id === 'camera') setCameraVisible(true);
     const current = document.querySelector(`.app-window[data-app-id="${id}"]`);
     if (current) {current.style.zIndex=String(++windowZ);return;}
     const el=document.createElement('section');el.className='app-window';el.dataset.appId=id;el.setAttribute('role','dialog');el.setAttribute('aria-label',t.title);
@@ -58,6 +91,7 @@
     if(id==='ai') attachChat(el);
     if(id==='internet') attachBrowser(el);
     if(id==='files') attachFilePicker(el);
+    window.IrinaI18n?.apply(el);
   }
   function enableDrag(target,handle) {
     let start=null;
@@ -81,6 +115,8 @@
     } catch(e){toast('Камера недоступна: '+(e.message||'проверь разрешение браузера'));stopCamera();}
     finally{cameraBusy=false;}
   }
+  function setCameraVisible(visible){bubble.hidden=!visible;if(!visible)stopCamera();try{localStorage.setItem('irina-camera-visible',visible?'1':'0');}catch(_){}}
+  try{setCameraVisible(localStorage.getItem('irina-camera-visible')!=='0');}catch(_){setCameraVisible(true);}
   function stopCamera(){if(cameraStream){cameraStream.getTracks().forEach(track=>track.stop());cameraStream=null;} video.pause();video.srcObject=null;placeholder.hidden=false;$('#camera-toggle').textContent='▶';$('#camera-toggle').title='Включить камеру';$('#camera-shot').disabled=true;}
   function takeSelfie(){
     if(!cameraStream||!video.videoWidth){toast('Сначала включи камеру');return;}
@@ -96,17 +132,54 @@
   document.addEventListener('click',e=>{
     const theme=e.target.closest('button[data-theme]');if(theme){setTheme(theme.dataset.theme);return;}
     const app=e.target.closest('button[data-app]');if(app){openApp(app.dataset.app);return;}
+    const native=e.target.closest('button[data-launch]');
+    if(native){void launchNative(native);return;}
     const cmd=e.target.closest('button[data-cmd]');if(!cmd)return;
+    if(cmd.dataset.cmd==='camera-visibility')setCameraVisible(bubble.hidden);
+    if(cmd.dataset.cmd==='camera-show')setCameraVisible(true);
+    if(cmd.dataset.cmd==='camera-hide')setCameraVisible(false);
     if(cmd.dataset.cmd==='camera-start')void startCamera();if(cmd.dataset.cmd==='camera-shot')takeSelfie();if(cmd.dataset.cmd==='camera-stop')stopCamera();if(cmd.dataset.cmd==='join-call')joinCall(cmd.closest('.app-window'));
   });
   $('#camera-toggle').addEventListener('click',()=>cameraStream?stopCamera():startCamera());
   $('#camera-shot').addEventListener('click',takeSelfie);
-  $('#camera-close').addEventListener('click',()=>{stopCamera();bubble.hidden=true;});
+  $('#camera-close').addEventListener('click',()=>setCameraVisible(false));
   // Camera can be moved using its small drag handle without breaking camera buttons.
   const drag=$('#camera-drag');let bubbleStart=null;
   drag.addEventListener('pointerdown',e=>{bubbleStart={x:e.clientX,y:e.clientY,left:bubble.getBoundingClientRect().left,top:bubble.getBoundingClientRect().top};drag.setPointerCapture(e.pointerId);});
   drag.addEventListener('pointermove',e=>{if(!bubbleStart)return;bubble.style.left=Math.max(0,Math.min(innerWidth-bubble.offsetWidth,bubbleStart.left+e.clientX-bubbleStart.x))+'px';bubble.style.top=Math.max(65,Math.min(innerHeight-bubble.offsetHeight-70,bubbleStart.top+e.clientY-bubbleStart.y))+'px';bubble.style.right='auto';bubble.style.bottom='auto';});
   for(const name of ['pointerup','pointercancel','lostpointercapture'])drag.addEventListener(name,()=>bubbleStart=null);
-  const clock=()=>{const now=new Date();$('#clock-time').textContent=new Intl.DateTimeFormat('ru-RU',{hour:'2-digit',minute:'2-digit'}).format(now);$('#clock-date').textContent=new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'short'}).format(now);};clock();setInterval(clock,15000);
+  const clock=()=>{const now=new Date();const locale=window.IrinaI18n?.getLanguage()==='en'?'en-US':'ru-RU';$('#clock-time').textContent=new Intl.DateTimeFormat(locale,{hour:'2-digit',minute:'2-digit'}).format(now);$('#clock-date').textContent=new Intl.DateTimeFormat(locale,{day:'numeric',month:'short'}).format(now);};clock();setInterval(clock,15000);
+  async function launchNative(button){
+    const id=button.dataset.launch;
+    const status=button.closest('.app-window')?.querySelector('.native-status');
+    button.disabled=true;
+    try{
+      const response=await fetch('/api/launch',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({app:id})
+      });
+      const result=await response.json();
+      if(!response.ok)throw Error(result.error||'Application not available');
+      const message=window.IrinaI18n?.getLanguage()==='en'?'Application launched':'Программа запущена';
+      if(status)status.textContent=message;
+      toast(message);
+    }catch(error){
+      const message=error.message||'Application unavailable';
+      if(status)status.textContent=message;
+      toast(message);
+    }finally{button.disabled=false;}
+  }
+  $('#language-toggle').addEventListener('click',()=>{
+    const api=window.IrinaI18n;
+    if(api)api.setLanguage(api.getLanguage()==='ru'?'en':'ru');
+    clock();
+  });
+  $('#keyboard-help').addEventListener('click',()=>{
+    openApp('settings');
+    toast(window.IrinaI18n?.getLanguage()==='en'?
+      'Keyboard: Windows Win+Space; Ubuntu XFCE/X11 Alt+Shift':
+      'Раскладка: Windows Win+Пробел; Ubuntu XFCE/X11 Alt+Shift');
+  });
+  window.IrinaI18n?.apply();
   window.addEventListener('beforeunload',stopCamera);
 })();
