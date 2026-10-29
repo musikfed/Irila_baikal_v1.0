@@ -165,8 +165,14 @@ jobs:
           $file = 'windows/Irina-USB-Assistant.cmd'
           $raw = [IO.File]::ReadAllText((Resolve-Path $file), [Text.Encoding]::UTF8)
           if ($raw -notlike '*### IRINA_PS_START ###*') { throw 'Embedded UTF8 PowerShell entry missing' }
-          if ($raw -notlike '*Get-FileHash*' -or $raw -notlike '*Win32_DiskDrive*') {
-            throw 'Image SHA256 or external disk checker missing'
+          if ($raw -notlike '*Get-FileHash*' -or $raw -notlike '*Get-Disk -ErrorAction Stop*' -or $raw -notlike '*Find-IrinaUsbDisks*') {
+            throw 'Image SHA256 or correct Get-Disk USB bus selector missing'
+          }
+          if ($raw -like "*_.InterfaceType -eq 'USB'*" -or $raw -like "*Get-CimInstance -ClassName Win32_DiskDrive*") {
+            throw 'Regression: UASP Realtek may report InterfaceType=SCSI; always use Get-Disk.BusType'
+          }
+          if ($raw -notlike "*InterfaceType='SCSI'*" -or $raw -notlike "*BusType='USB'*") {
+            throw 'Regression: test must include UASP USB/SCSI mixed identification'
           }
           if ($raw -notlike '*-NoProfile -STA*' -or $raw -notlike '*-SelfTest:*') {
             throw 'Launcher must start one offline PowerShell GUI with self-test'
@@ -195,4 +201,4 @@ jobs:
         run: |
           call windows\Irina-USB-Assistant.cmd --self-test
           if errorlevel 1 exit /b 1
-          echo PASS: standalone CMD and embedded UTF-8 GUI parser
+          echo PASS: standalone CMD, USB/UASP Realtek disk selector, embedded UTF-8 GUI parser
