@@ -1,0 +1,68 @@
+name: Build Irina Baikal read-only IMG
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Core is most likely to fit 5 GiB; full includes office, graphics, mail and SIP'
+        required: true
+        default: core
+        type: choice
+        options:
+          - core
+          - full
+      max_mib:
+        description: 'Maximum raw image size in MiB (5120=5 GiB; full may need 8192)'
+        required: true
+        default: '5120'
+        type: choice
+        options:
+          - '5120'
+          - '8192'
+
+permissions:
+  contents: read
+
+jobs:
+  build-image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check available disk space
+        run: |
+          df -h /
+          free -h
+          echo "This job ONLY builds a file image; it never accesses the Acer SSD."
+      - name: Install Linux image build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debootstrap ubuntu-keyring rsync squashfs-tools             parted gdisk dosfstools e2fsprogs util-linux grub-efi-amd64-bin             grub-common python3
+      - name: Prepare Ubuntu 24.04 stage with casper
+        run: |
+          sudo bash scripts/prepare_source.sh --stage /srv/irina/rootfs --${{ inputs.profile }}
+          df -h /
+      - name: Bake compact GPT EFI SquashFS image
+        run: |
+          sudo bash scripts/bake_image.sh --stage /srv/irina/rootfs             --output /srv/irina/irina_baikal_1.0.img             --max-image-mib ${{ inputs.max_mib }}
+          cd /srv/irina
+          sha256sum -c irina_baikal_1.0.img.sha256
+          ls -lh irina_baikal_1.0.img irina_baikal_1.0.img.sha256
+      - name: Remove build rootfs to free artifact staging space
+        if: success()
+        run: |
+          sudo rm -rf /srv/irina/rootfs
+          df -h /
+      - name: Prepare downloadable files
+        run: |
+          sudo chmod 644 /srv/irina/irina_baikal_1.0.img /srv/irina/irina_baikal_1.0.img.sha256
+          mkdir -p output
+          mv /srv/irina/irina_baikal_1.0.img output/
+          mv /srv/irina/irina_baikal_1.0.img.sha256 output/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: irina-baikal-1.0-readonly-img
+          path: output/
+          if-no-files-found: error
+          compression-level: 1
+          retention-days: 1
