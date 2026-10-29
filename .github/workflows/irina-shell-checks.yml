@@ -1,0 +1,33 @@
+name: Irina Shell checks
+on:
+  push:
+    paths:
+      - 'ui/**'
+      - 'scripts/**'
+      - '.github/workflows/irina-shell-checks.yml'
+  pull_request:
+    paths:
+      - 'ui/**'
+      - 'scripts/**'
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Python syntax
+        run: python -m compileall -q ui
+      - name: Test shell API
+        run: python -m unittest discover -s ui/tests -v
+      - name: JS syntax
+        run: |
+          node --check ui/web/app.js
+          node --check ui/web/i18n.js
+      - name: Bash syntax
+        run: |
+          bash -n scripts/install_desktop_apps.sh
+          bash -n scripts/keyboard_x11_ru_en.sh
+      - name: Preview app profile (no installs)
+        run: bash scripts/install_desktop_apps.sh --full --dry-run
