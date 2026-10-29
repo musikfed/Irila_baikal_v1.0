@@ -9,6 +9,7 @@ on:
       - 'scripts/build_in_wsl.sh'
       - 'windows/Prepare-IrinaBuilderOnF.ps1'
       - 'windows/Build-IrinaViaWSL.ps1'
+      - 'windows/Build-IrinaViaWSL-v2.ps1'
       - 'windows/Diagnose-IrinaWSL.ps1'
       - 'ai/hrag.py'
       - '.github/workflows/check-readonly-build.yml'
@@ -44,7 +45,7 @@ jobs:
         run: |
           $tokens = $null
           $errors = $null
-          foreach ($file in @('windows/Prepare-IrinaBuilderOnF.ps1', 'windows/Build-IrinaViaWSL.ps1', 'windows/Diagnose-IrinaWSL.ps1')) {
+          foreach ($file in @('windows/Prepare-IrinaBuilderOnF.ps1', 'windows/Build-IrinaViaWSL.ps1', 'windows/Build-IrinaViaWSL-v2.ps1', 'windows/Diagnose-IrinaWSL.ps1')) {
             $tokens = $null
             $errors = $null
             [System.Management.Automation.Language.Parser]::ParseFile(
@@ -73,7 +74,13 @@ jobs:
               snippet = found.group(1).replace("__PROFILE__", "core").replace("__MAX__", "5120")
               p = subprocess.run(["bash", "-n"], input=snippet, capture_output=True, text=True)
               assert p.returncode == 0, f"{variable} bash syntax failure: {p.stderr}"
-          print("WSL PowerShell-to-Bash transfer: verified both embedded scripts")
+          latest = Path("windows/Build-IrinaViaWSL-v2.ps1").read_text(encoding="utf-8")
+          assert 'IRINA WSL BUILDER v2.1' in latest
+          assert '--exec /bin/bash $linuxFile' in latest
+          assert 'CHECK-ONLY PASS.' in latest
+          assert '-- bash -lc $preflight' not in latest
+          assert '-- bash -lc $commands' not in latest
+          print("WSL PowerShell-to-Bash transfer: verified both embedded scripts and v2")
           PY
       - name: Refuse building without privileges
         run: |
