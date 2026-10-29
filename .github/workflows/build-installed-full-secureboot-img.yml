@@ -29,7 +29,7 @@ on:
           - core
           - full
       max_mib:
-        description: 'Maximum raw image size MiB (8192=8 GiB, USB expands after first boot)'
+        description: 'Maximum raw image size MiB (12 GiB default; actual IMG dynamically sized)'
         required: true
         default: '12288'
         type: choice
@@ -99,11 +99,11 @@ jobs:
             xfce4-screenshooter libreoffice-writer libreoffice-calc libreoffice-impress \
             libreoffice-draw libreoffice-base gimp inkscape thunderbird \
             linphone-desktop aisleriot gnome-mines gnome-mahjongg; do
-            dpkg_status="$(sudo chroot /srv/irina/rootfs dpkg-query -W -f='\${Status}' "$pkg")"
+            dpkg_status="$(sudo chroot /srv/irina/rootfs dpkg-query -W -f='${Status}' "$pkg")"
             test "$dpkg_status" = "install ok installed" || { echo "MISSING: $pkg ($dpkg_status)" >&2; exit 1; }
             echo "PASS INSTALLED: $pkg"
           done
-          sudo chroot /srv/irina/rootfs dpkg-query -W -f='\${binary:Package}\t\${Version}\n' | sort > /tmp/irina_full_packages.txt
+          sudo chroot /srv/irina/rootfs dpkg-query -W -f='${binary:Package}\t${Version}\n' | sort > /tmp/irina_full_packages.txt
           wc -l /tmp/irina_full_packages.txt
       - name: Bake signed UEFI + writable ext4 installed SSD image
         run: |
