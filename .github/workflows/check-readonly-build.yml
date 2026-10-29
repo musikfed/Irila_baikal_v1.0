@@ -179,3 +179,15 @@ jobs:
           call windows\Start-Irina-USB-Assistant.cmd --self-test
           if errorlevel 1 exit /b 1
           echo PASS: Windows CMD launcher UTF-8 decode works
+      - name: Bootstrap downloaded GUI over HTTPS and run headless self-test (PowerShell 5.1)
+        shell: cmd
+        run: |
+          call windows\Start-Irina-USB-Assistant.cmd --bootstrap-test
+          if errorlevel 1 exit /b 1
+          echo PASS: Windows GUI downloaded and started successfully without admin
+      - name: Verify downloaded PS1 keeps Windows-compatible UTF-8 BOM
+        shell: powershell
+        run: |
+          $f = [System.IO.File]::ReadAllBytes('windows/Irina-USB-Assistant.ps1')
+          if ($f[0] -ne 239 -or $f[1] -ne 187 -or $f[2] -ne 191) { throw 'Bootstrap lost UTF-8 BOM' }
+          Write-Host 'PASS: bootstrap wrote valid PowerShell 5.1 source encoding'
