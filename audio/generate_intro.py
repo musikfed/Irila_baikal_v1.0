@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Irina Baikal audio v0.7: original cosmic music and clearer Russian TTS.
+"""Irina Baikal audio v1.0: original Baikal water ambience or classic cosmic intro.
 
 Synthetic eSpeak voice is NOT a realistic whispered human recording.
 Usage: python audio/generate_intro.py --output irina_intro.wav
 Optional licensed voice WAV: --voice-wav sample.wav
+By default creates gently washing lake-water ambience; --theme cosmic restores original music.
 """
 from __future__ import annotations
 import argparse
@@ -20,7 +21,7 @@ SR = 44100
 START = 2.25
 TAIL = 2.2
 MIN_DURATION = 10.7
-PARTS = ('Ирина Байкал.', 'Систем один точка ноль.')
+PARTS = ('Ирина Байкал. Версия один ноль.', 'Создана за пять часов. Добро пожаловать!')
 
 
 def band(x, lo=None, hi=None):
@@ -130,13 +131,35 @@ def background(n, duration):
     return np.stack((left, right), axis=1)
 
 
-def generate(out, voice_path=None):
+def lake_background(n, duration):
+    """Original procedurally-generated shore waves, no sample or copyright source."""
+    rng = np.random.default_rng(20261029)
+    t = np.arange(n, dtype=np.float64) / SR
+    envelope = np.clip(t / .75, 0, 1) * np.clip((duration - t) / 1.9, 0, 1)
+    # Layer two non-periodic slow swells of soft filtered pink-ish noise,
+    # with an independent treble wash. This is NOT a recorded lake sample.
+    broad = band(rng.standard_normal(n), lo=60, hi=2200)
+    hush = band(rng.standard_normal(n), lo=400, hi=5500)
+    broad /= np.std(broad) + 1e-12
+    hush /= np.std(hush) + 1e-12
+    swells = (
+        .20 + .35 * np.maximum(0, np.sin(2 * np.pi * .14 * t + .25)) ** 2
+        + .32 * np.maximum(0, np.sin(2 * np.pi * .095 * t - .3)) ** 2
+    )
+    foam = .015 * broad * swells * envelope
+    spray = .0075 * hush * swells * envelope
+    left = foam + spray
+    right = .89 * foam + .80 * spray
+    return np.stack((left, right), axis=1)
+
+
+def generate(out, voice_path=None, theme='lake'):
     voice = prepare_voice(load_voice_wav(voice_path) if voice_path else synthesize_voice())
     start = int(START * SR)
     end = start + len(voice)
     duration = max(MIN_DURATION, end / SR + TAIL)
     n = int(np.ceil(duration * SR))
-    music = background(n, duration)
+    music = lake_background(n, duration) if theme == 'lake' else background(n, duration)
 
     # Sidechain music ducking while speech is played, -13 dB, smooth transitions.
     duck = np.ones(n)
@@ -172,5 +195,6 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('--output', type=Path, default=Path('irina_intro.wav'))
     p.add_argument('--voice-wav', type=Path)
+    p.add_argument('--theme', choices=('lake', 'cosmic'), default='lake')
     args = p.parse_args()
-    generate(args.output, args.voice_wav)
+    generate(args.output, args.voice_wav, args.theme)
