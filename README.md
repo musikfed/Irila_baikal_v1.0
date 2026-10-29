@@ -1,3 +1,29 @@
+## Основная сборка по первоначальному ТЗ: SquashFS + RAM OverlayFS (без обязательной тестовой VM)
+
+**Новая версия сборщика (экспериментальная, не прошла реальную загрузку Acer):**
+
+- [Подробный маршрут Windows 11 → SquashFS → внешний SSD](docs/BUILD_READONLY_WINDOWS.md)
+- [Подготовка source/rootfs](scripts/prepare_source.sh)
+- [Запекание образа 3–5 GiB при достаточном сжатии](scripts/bake_image.sh)
+- [Проверка SHA256 и USB-накопителя на Windows](scripts/flash_irina.py)
+- [Служба Hrag](ai/hrag.py)
+- [GitHub Actions: собрать IMG в облаке, без установки WSL/Ubuntu на Acer](.github/workflows/build-readonly-img.yml)
+
+### Самый простой вариант с Windows 11
+
+1. Открыть GitHub → Actions → **Build Irina Baikal read-only IMG** → **Run workflow**.
+2. Выбрать `core` и `5120` MiB, затем запустить сборку. Это запрос на **создание файла образа на GitHub**, а не на SSD Acer.
+3. **Если** workflow завершится успешно, скачать Artifact `irina-baikal-1.0-readonly-img`, распаковать IMG и SHA256 в Windows. GitHub может ограничивать размер артефакта и доступное место на runner.
+4. Запустить `py -3.13 scripts\flash_irina.py --image "C:\путь\irina_baikal_1.0.img"`: проверит SHA и покажет физические диски **только чтение**.
+5. Rufus → выбрать **внешний USB M.2 SSD 256 ГБ** → RAW/DD-запись → выключить Acer → F12 → внешний SSD.
+
+SSD уже пустой: дополнительное форматирование не нужно. **Внутренний Windows SSD не трогаем**. Сборка на GitHub и загрузка на Acer пока не проверены; до появления завершённого Artifact не считать, что образ существует. Варианты локальной сборки через WSL2 либо Ubuntu Live-USB тоже описаны в руководстве.
+
+Внимание: оригинальный старый [16 GiB RW-ext4 сборщик](scripts/build_irina_img.sh) оставлен в проекте только как **устаревший прототип** и НЕ соответствует первоначальному ТЗ с SquashFS. Не выбирать его для первой Read-Only сборки. Новый образ пока использует неподписанный GRUB, а не Rust Secure Boot; Ollama/Qwen добавляются только с заранее полученными Linux-моделью и бинарником. В базовом `core` образе модель отсутствует. Временные изменения `/home` пропадают при перезапуске до настройки постоянного DATA-раздела.
+
+
+---
+
 # PegiNelab OS — Ирина Байкал 1.0
 
 ## ВАЖНО: основной путь сборки — Source → SquashFS → UEFI, без обязательной VM
