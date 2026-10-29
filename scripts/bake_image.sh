@@ -38,7 +38,7 @@ done
 [[ "$MAX_MIB" =~ ^[0-9]+$ ]] || die 'Bad --max-image-mib'
 ((MAX_MIB>=3072 && MAX_MIB<=32768)) || die 'Image size cap must be 3072..32768 MiB'
 [[ "$(uname -m)" == x86_64 ]] || die 'Need x86_64 Linux builder'
-for c in mksquashfs parted partprobe udevadm losetup mkfs.vfat mkfs.ext4 grub-mkstandalone sha256sum stat mount umount; do
+for c in mksquashfs parted partprobe partx udevadm losetup mkfs.vfat mkfs.ext4 grub-mkstandalone sha256sum stat mount umount; do
   command -v "$c" >/dev/null || die "Install missing tool: $c"
 done
 [[ -d "$STAGE/etc" && -d "$STAGE/usr" && -d "$STAGE/opt/irina/ui" ]] || die 'Stage not prepared by prepare_source.sh'
@@ -75,6 +75,12 @@ partprobe "$LOOP"
 udevadm settle
 EFI="$LOOP"p1
 LIVE="$LOOP"p2
+# GPT was created AFTER losetup --partscan. Some WSL2 kernels need a
+# second partition table update before /dev/loopNp1 and p2 are exposed.
+if [[ ! -b "$EFI" || ! -b "$LIVE" ]]; then
+  partx --update "$LOOP" || true
+  udevadm settle
+fi
 [[ -b "$EFI" && -b "$LIVE" ]] || die 'Loop partitions missing; WSL2 environment may lack loop partition support'
 mkfs.vfat -F32 -n IRINA_EFI "$EFI"
 mkfs.ext4 -q -F -m0 -L IRINA_LIVE "$LIVE"
@@ -113,7 +119,14 @@ grub-mkstandalone -O x86_64-efi \
 sync
 umount "$MNT"
 losetup -d "$LOOP"; LOOP=""
-sha256sum "$OUT" > "$OUT.sha256"
+# CRITICAL: hash manifest MUST use only basename. An absolute /srv/... path
+# would make "sha256sum -c" on F: silently check the original WSL image
+# rather than the COPIED file and could conceal a corrupt transfer.
+(
+  cd "$(dirname "$OUT")"
+  sha256sum "$(basename "$OUT")" > "$(basename "$OUT").sha256"
+  sha256sum -c "$(basename "$OUT").sha256"
+)
 # Let the ordinary Windows/WSL user copy the completed build artifacts.
 chmod 644 "$OUT" "$OUT.sha256"
 READY=1
