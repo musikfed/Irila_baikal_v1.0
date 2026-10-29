@@ -25,7 +25,7 @@ fi
 # Base: bilingual locale, XFCE keyboard toggle, common office apps, mail.
 BASE=(language-pack-ru language-pack-en locales x11-xkb-utils xfce4-xkb-plugin
   libreoffice-writer libreoffice-calc libreoffice-impress libreoffice-draw
-  libreoffice-l10n-ru libreoffice-help-ru thunderbird)
+  libreoffice-l10n-ru libreoffice-help-ru thunderbird mpg123)
 # Full: entire LibreOffice suite, bitmap/vector tools, SIP phone and light mini games.
 FULL=(libreoffice-base libreoffice-math libreoffice-gnome
   gimp inkscape linphone-desktop aisleriot gnome-mines gnome-mahjongg)
