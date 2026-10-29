@@ -46,7 +46,7 @@ bash scripts/install_desktop_apps.sh --full --install
 
 ## Native launcher security
 
-The browser shell's `POST /api/launch` accepts **only** a fixed allowlist (`writer`, `calc`, `impress`, `draw`, `base`, `gimp`, `inkscape`, `mail`, `sip`, `solitaire`, `mines`, `mahjongg`). No shell commands or user arguments. It works only on Linux, from an **unprivileged graphical session**, requires JSON and exact same-origin HTTP headers, and refuses launch if a program is missing. When previewed on Windows 11, Irina Shell shows the app menus but will not execute Ubuntu applications.
+The browser shell's `POST /api/launch` accepts **only** a fixed allowlist (`writer`, `calc`, `impress`, `draw`, `base`, `math`, `gimp`, `inkscape`, `mail`, `sip`, `solitaire`, `mines`, `mahjongg`). No shell commands or user arguments. It works only on Linux, from an **unprivileged graphical session**, requires JSON and exact same-origin HTTP headers, and refuses launch if a program is missing. When previewed on Windows 11, Irina Shell shows the app menus but will not execute Ubuntu applications.
 
 ## Persistent user data on the 256 GB USB SSD
 
