@@ -18,7 +18,7 @@ REPO = Path(__file__).resolve().parents[1]
 
 class TestReadOnlyPipeline(unittest.TestCase):
     def test_linux_script_syntax(self):
-        for name in ("prepare_source.sh", "bake_image.sh",
+        for name in ("prepare_source.sh", "bake_image.sh", "bake_image_secureboot.sh",
                      "build_in_wsl.sh", "check_wsl_loop.sh"):
             file = REPO / "scripts" / name
             with self.subTest(script=name):
@@ -84,6 +84,25 @@ class TestReadOnlyPipeline(unittest.TestCase):
         self.assertIn('[[ -b "$EFI" && -b "$LIVE" ]]', script)
         self.assertIn("BOOTX64.EFI", script)
         self.assertIn("boot=casper nopersistent", script)
+
+    def test_secureboot_second_img_does_not_replace_first(self):
+        secure = (REPO / "scripts" / "bake_image_secureboot.sh").read_text("utf-8")
+        original = (REPO / "scripts" / "bake_image.sh").read_text("utf-8")
+        workflow = (REPO / ".github" / "workflows" / "build-secureboot-img.yml").read_text("utf-8")
+        self.assertIn('[[ "$OUT" == *_secureboot.img ]]', secure)
+        self.assertIn('SHIM="$SIGNED_ASSETS/usr/lib/shim/shimx64.efi.signed.latest"', secure)
+        self.assertIn('GRUB_SIGNED="$SIGNED_ASSETS/usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed"', secure)
+        self.assertIn('install -m 0644 "$SHIM" "$MNT/EFI/BOOT/BOOTX64.EFI"', secure)
+        self.assertIn('install -m 0644 "$GRUB_SIGNED" "$MNT/EFI/BOOT/grubx64.efi"', secure)
+        self.assertIn('sbverify --list "$binary"', secure)
+        self.assertNotIn("grub-mkstandalone -O x86_64-efi", secure)
+        self.assertIn('grub-mkstandalone -O x86_64-efi', original)
+        self.assertIn('irina_baikal_1.0_secureboot.img', workflow)
+        self.assertIn('irina-baikal-1.0-secureboot-img', workflow)
+        self.assertNotIn('irina-baikal-1.0-readonly-img', workflow)
+        self.assertIn("retention-days: 30", workflow)
+        self.assertIn('sha256sum -c irina_baikal_1.0_secureboot.img.sha256', workflow)
+        self.assertIn("apt-get download shim-signed grub-efi-amd64-signed", workflow)
 
     def test_copy_refuses_existing_artifacts(self):
         script = (REPO / "scripts" / "build_in_wsl.sh").read_text("utf-8")
