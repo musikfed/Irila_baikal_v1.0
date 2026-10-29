@@ -6,7 +6,7 @@
 
 - [**Главная инструкция Windows-first установленной версии**](docs/INSTALLED_USB_WINDOWS_FIRST.md)
 - [**Независимый GitHub Actions: Build Installed USB Secure Boot**](.github/workflows/build-installed-secureboot-img.yml)
-- [**Windows GUI помощник (проверка SHA и USB, открывает Rufus)**](windows/Irina-USB-Assistant.ps1)
+- [**Один файл Windows GUI (проверка SHA и USB, открывает Rufus)**](windows/Irina-USB-Assistant.cmd)
 
 **Три прошлых IMG не удалены**: исходный `irina_baikal_1.0.img`, Live Secure Boot и Live Secure Boot R2. Новый файл называется `irina_baikal_1.0_installed_secureboot.img`. Только Rufus вручную подтверждает стирание внешнего SSD. Внутренние Windows диски, Secure Boot и BitLocker не менять. **Новая система пока не прошла аппаратную загрузку на Acer.**
 
