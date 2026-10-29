@@ -82,10 +82,15 @@ jobs:
           df -h /
       - name: Prepare downloadable files
         run: |
+          # The image was created by root in /srv/irina. GNU mv tries to
+          # unlink the root-owned source directory and fails as 'runner'.
+          # Copy readable files instead, then verify the COPIED IMG.
           sudo chmod 644 /srv/irina/irina_baikal_1.0.img /srv/irina/irina_baikal_1.0.img.sha256
           mkdir -p output
-          mv /srv/irina/irina_baikal_1.0.img output/
-          mv /srv/irina/irina_baikal_1.0.img.sha256 output/
+          cp -- /srv/irina/irina_baikal_1.0.img output/
+          cp -- /srv/irina/irina_baikal_1.0.img.sha256 output/
+          ( cd output && sha256sum -c irina_baikal_1.0.img.sha256 )
+          ls -lh output/irina_baikal_1.0.img output/irina_baikal_1.0.img.sha256
       - uses: actions/upload-artifact@v4
         with:
           name: irina-baikal-1.0-readonly-img
