@@ -8,7 +8,7 @@ param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference="Stop"
-Write-Host "IRINA WSL BUILDER v2.1 (file-based Bash runner, 2026-10-29)" -ForegroundColor Cyan
+Write-Host "IRINA WSL BUILDER v2.2 (file-based Bash runner, 2026-10-29)" -ForegroundColor Cyan
 function Fail([string]$message) { throw "IRINA WSL: $message" }
 
 if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) { Fail "WSL2 is not installed" }
@@ -66,6 +66,7 @@ $preflightStatus = Invoke-IrinaWSLScript -ScriptText $preflight -Phase "Checking
 if ($preflightStatus -ne 0) { Fail "WSL preflight failed (code $preflightStatus); no build started" }
 if ($CheckOnly) {
   Write-Host "CHECK-ONLY PASS. No packages were installed and no IMG was created." -ForegroundColor Green
+  Write-Host "NOTE: This does NOT verify loop/GPT capability, installed packages, full image build or Acer boot." -ForegroundColor Yellow
   return
 }
 Write-Host "Distro: $Distro; profile: $Profile; max IMG: $MaxImageMiB MiB" -ForegroundColor Cyan
@@ -76,7 +77,7 @@ $commands=@'
 set -Eeuo pipefail
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y git debootstrap ubuntu-keyring rsync squashfs-tools parted gdisk dosfstools e2fsprogs util-linux grub-efi-amd64-bin grub-common python3
+apt-get install -y git debootstrap ubuntu-keyring rsync squashfs-tools parted gdisk dosfstools e2fsprogs util-linux udev mount grub-efi-amd64-bin grub-common python3
 cd /root
 if [[ ! -e Irila_baikal_v1.0 ]]; then
   git clone https://github.com/musikfed/Irila_baikal_v1.0.git
