@@ -104,7 +104,7 @@
   }
   function randomToken(){const a=new Uint8Array(6);crypto.getRandomValues(a);return [...a].map(x=>x.toString(16).padStart(2,'0')).join('');}
   async function startCamera() {
-    bubble.hidden=false;
+    setCameraVisible(true);
     if(cameraStream) {toast('Камера уже включена');return;}
     if(cameraBusy)return; cameraBusy=true;
     try {
