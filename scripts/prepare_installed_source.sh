@@ -56,6 +56,12 @@ FSTAB
 echo IRINA_INSTALLED_USB_R1 > "$STAGE/etc/irina-installed-marker"
 mkdir -p "$STAGE/boot/efi" "$STAGE/var/lib/irina" "$STAGE/usr/share/irina" "$STAGE/etc/xdg/autostart"
 printf '%s\n' 'Подготовка системы: подключите Wi-Fi для автоматической установки программ.' > "$STAGE/var/lib/irina/setup-status"
+if [[ "$PROFILE" == full ]]; then
+  # All software dependencies were already resolved and installed in the CI
+  # chroot, so the first graphical boot must NOT wait for Wi-Fi or re-install.
+  touch "$STAGE/var/lib/irina/software-ready" "$STAGE/var/lib/irina/software-extras-ready"
+  printf '%s\n' 'Готово: программы уже установлены в GitHub CI. Работайте без интернета.' > "$STAGE/var/lib/irina/setup-status"
+fi
 install -m 0755 "$REPO/scripts/irina_grow_usb_root.sh" "$STAGE/usr/local/sbin/irina-grow-usb-root"
 install -m 0755 "$REPO/scripts/irina_auto_provision.sh" "$STAGE/usr/local/sbin/irina-auto-provision"
 install -m 0644 "$REPO/hardware/acer_swift3_sf314-41.json" "$STAGE/usr/share/irina/hardware-profile.json"
