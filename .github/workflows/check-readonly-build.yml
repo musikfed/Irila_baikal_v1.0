@@ -4,6 +4,8 @@ on:
     paths:
       - 'scripts/prepare_source.sh'
       - 'scripts/bake_image.sh'
+      - 'scripts/bake_image_secureboot.sh'
+      - '.github/workflows/build-secureboot-img.yml'
       - 'scripts/flash_irina.py'
       - 'scripts/check_wsl_loop.sh'
       - 'scripts/build_in_wsl.sh'
@@ -18,6 +20,8 @@ on:
     paths:
       - 'scripts/prepare_source.sh'
       - 'scripts/bake_image.sh'
+      - 'scripts/bake_image_secureboot.sh'
+      - '.github/workflows/build-secureboot-img.yml'
       - 'scripts/flash_irina.py'
       - 'ai/hrag.py'
 jobs:
@@ -32,6 +36,7 @@ jobs:
         run: |
           bash -n scripts/prepare_source.sh
           bash -n scripts/bake_image.sh
+          bash -n scripts/bake_image_secureboot.sh
           bash -n scripts/check_wsl_loop.sh
           bash -n scripts/build_in_wsl.sh
           python -m py_compile scripts/flash_irina.py ai/hrag.py
