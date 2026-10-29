@@ -181,6 +181,29 @@
       'Keyboard: Windows Win+Space; Ubuntu XFCE/X11 Alt+Shift':
       'Раскладка: Windows Win+Пробел; Ubuntu XFCE/X11 Alt+Shift');
   });
+  const intro = $('#startup-intro');
+  const preview = $('#intro-preview');
+  if (intro && preview) {
+    intro.volume = 0.58;
+    preview.addEventListener('click', async () => {
+      try {
+        if (!intro.paused) {
+          intro.pause();
+          intro.currentTime = 0;
+          return;
+        }
+        intro.currentTime = 0;
+        await intro.play();
+      } catch (_) {
+        toast(window.IrinaI18n?.getLanguage() === 'en'
+          ? 'Intro audio is unavailable. Check the MP3 asset or browser sound permissions.'
+          : 'Звуковая заставка недоступна. Проверь MP3 и разрешение звука в браузере.');
+      }
+    });
+    intro.addEventListener('error', () => {
+      toast('Звук старта: файл MP3 ещё не найден в папке assets.');
+    });
+  }
   window.IrinaI18n?.apply();
   window.addEventListener('beforeunload',stopCamera);
 })();
