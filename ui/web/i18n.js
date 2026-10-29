@@ -19,6 +19,7 @@ window.IrinaI18n = (() => {
     '◉ Круглая камера':'◉ Round camera','⚙ Все параметры':'⚙ All settings',
     '◉ Показать / скрыть круг':'◉ Show / hide camera circle',
     'Язык интерфейса':'Interface language',
+    '♪ Звук старта':'♪ Startup sound',
     'Язык интерфейса: RU / EN':'Interface language: RU / EN',
     'Ирина Байкал':'Irina Baikal',
     '◉ Селфи':'◉ Selfie',
