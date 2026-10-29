@@ -49,7 +49,7 @@ done
 findmnt -R -n "$STAGE" | grep -q . && die 'Stage has mounted filesystems; unmount chroot bind mounts first'
 VER="$(find "$STAGE/boot" -maxdepth 1 -name 'vmlinuz-*' -printf '%f\n' | sed 's/vmlinuz-//' | sort -V | tail -1)"
 [[ -n "$VER" && -s "$STAGE/boot/vmlinuz-$VER" && -s "$STAGE/boot/initrd.img-$VER" ]] || die 'Linux kernel/casper initrd missing'
-SHIM="$SIGNED_ASSETS/usr/lib/shim/shimx64.efi.signed.latest"
+SHIM="$SIGNED_ASSETS/usr/lib/shim/shimx64.efi.dualsigned"
 GRUB_SIGNED="$SIGNED_ASSETS/usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed"
 MOK="$SIGNED_ASSETS/usr/lib/shim/mmx64.efi"
 for binary in "$SHIM" "$GRUB_SIGNED" "$MOK" "$STAGE/boot/vmlinuz-$VER"; do
@@ -57,6 +57,10 @@ for binary in "$SHIM" "$GRUB_SIGNED" "$MOK" "$STAGE/boot/vmlinuz-$VER"; do
   # Reject unsigned custom EFI binaries: sbverify --list must show a signature.
   sbverify --list "$binary" | grep -Eq 'signature [0-9]+' || die "No UEFI signature found in $binary"
 done
+# The Acer's 2021 UEFI may only trust Microsoft's 2011 UEFI CA.
+# Require both generations of Microsoft signatures on the fallback shim,
+# preventing us from shipping a 2023-only binary to older firmware.
+sbverify --list "$SHIM" | grep -Eq 'signature 2' || die 'Ubuntu dualsigned shim does not expose two EFI signatures'
 echo "IRINA SECURE BOOT: Ubuntu shim, GRUB, MokManager and kernel carry EFI signatures; firmware trust must still be tested."
 mkdir -p "$(dirname "$OUT")"
 TMP="$(mktemp -d /var/tmp/irina-bake.XXXXXXXX)"
