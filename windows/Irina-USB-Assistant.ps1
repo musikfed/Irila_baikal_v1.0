@@ -1,5 +1,6 @@
 ﻿# IRINA BAIKAL Windows USB assistant. Read-only checks; Rufus does the writing.
-param([string]$Folder = 'F:\irinabaikal')
+param([string]$Folder = 'F:\irinabaikal', [switch]$SelfTest)
+if ($SelfTest) { Write-Host 'IRINA USB GUI: UTF-8 script decoded correctly'; return }
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [System.Windows.Forms.Application]::EnableVisualStyles()
