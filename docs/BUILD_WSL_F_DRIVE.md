@@ -1,161 +1,91 @@
-# Ирина Байкал 1.0: сборка через существующий WSL2 на диске F:
+# «Ирина Байкал 1.0» — сборка IMG через существующую Ubuntu WSL2 на Windows 11
 
-## Исправление ошибки `Ubuntu: -c: line 3: conditional binary operator expected`
+**Актуальная инструкция для Acer Swift 3 SF314-41, 29.10.2026.** Старая команда с windows/Build-IrinaViaWSL.ps1 выдавала ошибку «Ubuntu: -c: line 3: conditional binary operator expected»: Windows PowerShell некорректно передавал Bash-условия через bash -lc. **Использовать только новый [Build-IrinaViaWSL-v2.ps1](../windows/Build-IrinaViaWSL-v2.ps1), v2.1.** В нём команды исполняются из временного UTF-8 LF-файла по пути /mnt/f, без ошибок кавычек.
 
-Эта ошибка возникает при запуске **старой закешированной PowerShell-версии**, которая передаёт многострочные Bash-команды через `bash -lc` из Windows. Сборка при такой ошибке **не начинается**.
+## Что уже проверено
 
-**Использовать новый файл с отдельным именем `Build-IrinaViaWSL-v2.ps1`**, а не прежний `Build-IrinaViaWSL.ps1`:
+- Существующая Ubuntu WSL называется **Ubuntu-24.04**, WSL 2, успешный запуск /bin/true завершился с кодом 0.
+- DNS archive.ubuntu.com работает, HTTPS-запрос вернул HTTP 200 OK. Предупреждение WSL об обнаруженном localhost proxy пока не мешало соединению.
+- Папка **F:\irinabaikal** существует. На F: свободно ~253 ГиБ.
+- На существующей Ubuntu есть другие проекты. **Не устанавливать новую Ubuntu, не экспортировать существующую, не выполнять wsl --unregister и не удалять личные файлы.**
+- Отдельный внешний SSD **256 ГБ** (~238,46 ГиБ в Windows) пока пустой. Он **не является диском F:**.
 
-```powershell
+**Примечание о месте:** Ubuntu WSL показывает ~940 ГБ доступного пространства внутри виртуального ext4, но это *не* означает столько же свободного физического места на D:. Промежуточные файлы сборки находятся в /srv/irina в существующей WSL; готовые IMG и SHA256 копируются на F:. Убедитесь, что на реальном диске с WSL достаточно места.
+
+## 1. Скачать актуальную v2.1 в PowerShell Windows
+
+Эти команды можно выполнять из PS C:\WINDOWS\system32:
+
+~~~powershell
 Invoke-WebRequest "https://raw.githubusercontent.com/musikfed/Irila_baikal_v1.0/main/windows/Build-IrinaViaWSL-v2.ps1" -OutFile "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1"
 Select-String -Path "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Pattern "IRINA WSL BUILDER v2.1", "--exec /bin/bash"
+Get-Content "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1"
+~~~
+
+Проверьте содержимое до исполнения. Если строка **IRINA WSL BUILDER v2.1** не найдена, остановитесь. Имя **v2** должно присутствовать *и при скачивании, и при запуске*. Старый файл на F: можно оставить, но его больше не запускать.
+
+## 2. Запустить проверку WSL без установки пакетов
+
+~~~powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Distro Ubuntu-24.04 -CheckOnly
-```
+~~~
 
-Если видны `IRINA WSL BUILDER v2.1`, затем `PASS: Ubuntu 24.04...` и `CHECK-ONLY PASS`, то сценарий исправлен. Только после этого запускайте его без `-CheckOnly`:
+Ожидаемый вывод:
 
-```powershell
+~~~text
+IRINA WSL BUILDER v2.1 (file-based Bash runner, 2026-10-29)
+PASS: Ubuntu 24.04 + WSL2 + Linux ext4 staging + F: output
+CHECK-ONLY PASS. No packages were installed and no IMG was created.
+~~~
+
+Параметр -CheckOnly **не выполняет apt, не создаёт rootfs или IMG и не изменяет физические диски**. Он проверяет версии WSL/Ubuntu, Linux ext4 для промежуточных файлов и доступность F:. Полный тест loop/GPT выполняется уже на следующем этапе только во временном файле.
+
+Если вновь появляется «Ubuntu: -c: line 3» либо старое сообщение «WSL preflight failed; no build started» *без кода*, это **старый файл**, а не неисправность WSL.
+
+## 3. Собрать первую, компактную версию
+
+Только после CHECK-ONLY PASS выполнить:
+
+~~~powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Distro Ubuntu-24.04 -Profile core
-```
-
-Сценарий v2 сохраняет команды во временный UTF-8 LF-файл на F: и запускает их через `wsl.exe --exec /bin/bash /mnt/f/.../file.sh`. Это сохраняет кавычки Bash. Временный файл удаляется автоматически. **Не запускайте оба варианта одновременно.**
-
-
-> **Если WSL перестал запускаться:** не продолжайте копирование и сборку. Сначала откройте [безопасную диагностику WSL](WSL_RECOVERY.md). Ошибка `WSL_E_DISTRO_NOT_FOUND` для `IrinaBuilder` до завершения импорта не означает пропажу основной Ubuntu. Экспортирование рабочей Ubuntu копирует все проекты и возможные закрытые файлы — не публикуйте архив или VHDX.
-
-## Быстрый запуск из PowerShell — новый WSL-сборщик
-
-В репозитории есть [Build-IrinaViaWSL.ps1](../windows/Build-IrinaViaWSL.ps1). Он объединяет установку Linux-инструментов **в WSL**, получение GitHub-исходников, подготовку `rootfs`, SquashFS, GPT/EFI и проверку копии IMG на `F:`.
-
-Если ты **уже сделал** отдельный дистрибутив `IrinaBuilder` на F: (смотри ниже), достаточно запустить из PowerShell, открытого в папке репозитория:
-
-~~~powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\windows\Build-IrinaViaWSL.ps1"
 ~~~
 
-Если хочешь использовать **уже установленную Ubuntu-24.04**, не создавая отдельной копии:
+При приглашении ввести **BUILD-IRINA** и нажать Enter.
 
-~~~powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\windows\Build-IrinaViaWSL.ps1" -Distro Ubuntu-24.04
-~~~
+Сценарий устанавливает в существующую WSL системные **инструменты сборки**, получает код собственного GitHub, проверяет GPT/loop на *временном файле*, создаёт отдельный Ubuntu 24.04 rootfs в /srv/irina/rootfs, упаковывает SquashFS и создаёт GPT + UEFI raw IMG с контрольной суммой. **Не форматирует** никакой физический SSD.
 
-В этом варианте временные файлы будут храниться **в ext4 Ubuntu WSL**, то есть на диске, где установлен WSL (не обязательно F:). На F: автоматически скопируются только IMG и контрольная сумма. Если хочешь разместить **всё** на F:, сначала создай отдельную копию `IrinaBuilder` через `Prepare-IrinaBuilderOnF.ps1` и используй первый вариант.
+Он установит новые Linux-пакеты в существующую Ubuntu, но не должен удалять проекты. Перед вмешательством в рабочую Linux-систему стоит сохранить резервные копии важных файлов. Не запускайте два сборщика одновременно.
 
-Для полного набора программ:
+Если процесс прервался, **не повторяйте запуск наугад**: сборщик защищён от перезаписи уже созданного /srv/irina/rootfs. Сохраните текст ошибки. Нельзя удалять другие проекты или очищать всю WSL ради повторения.
 
-~~~powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\windows\Build-IrinaViaWSL.ps1" -Distro IrinaBuilder -Profile full -MaxImageMiB 8192
-~~~
+## 4. Проверить итоговые файлы
 
-Для первого опыта **рекомендуется core**. Программа не перезаписывает существующие образы, проверяет F: и версию Ubuntu WSL, требует ввод `BUILD-IRINA`, не выбирает физический диск и **не запускает Rufus автоматически**. Если сборка остановилась (например, WSL не поддержал loop/GPT), не записывай неполный IMG.
-
-**До запуска проверь, что F: не является целевым пустым внешним SSD 256 ГБ.**
-
----
-
-
-**Для Acer Swift SF314-41 под Windows 11 Pro.** Не требуется новая виртуальная машина; уже установленной Ubuntu 24.04 достаточно. Процедура создаёт Linux-образ **в отдельной копии WSL на F:**, а внешний SSD 256 ГБ не затрагивает до отдельного этапа с Rufus.
-
-**Важная проверка:** диск F: должен быть NTFS, с не менее ~40 GiB свободного места для первой сборки, и **не должен быть тем самым внешним USB SSD 256 ГБ**, который планируется прошивать. Для профиля `--full` лучше иметь 60–80 GiB. Если F: — целевой SSD, выберите другой рабочий диск.
-
-## 1. Проверить Windows и существующую Ubuntu WSL
-
-PowerShell в Windows (НЕ Ubuntu):
-
-~~~powershell
-wsl --list --verbose
-wsl --version
-Get-Volume -DriveLetter F
-Get-Partition -DriveLetter F | Get-Disk |
-  Select Number,FriendlyName,BusType,Size,IsBoot,IsSystem
-~~~
-
-Проверьте, что Ubuntu имеет имя `Ubuntu-24.04`, версия WSL — **2**, F: — NTFS и достаточно места. Если имя отличается, подставьте его во все команды ниже.
-
-## 2. Сделать отдельную копию WSL на F: (исходная Ubuntu останется)
-
-Скрипт [Prepare-IrinaBuilderOnF.ps1](../windows/Prepare-IrinaBuilderOnF.ps1) проверяет F: и WSL, запрашивает явное согласие `COPY-IRINA`, создаёт экспорт Ubuntu и импорт **новой** Linux-системы `IrinaBuilder` в `F:\irinabaikal\WSL-IrinaBuilder`.
-
-Сначала загрузите этот PowerShell-скрипт из своего GitHub (а не из посторонних источников):
-
-~~~powershell
-New-Item -ItemType Directory -Force F:\irinabaikal
-Invoke-WebRequest "https://raw.githubusercontent.com/musikfed/Irila_baikal_v1.0/main/windows/Prepare-IrinaBuilderOnF.ps1" -OutFile "F:\irinabaikal\Prepare-IrinaBuilderOnF.ps1"
-Get-Content "F:\irinabaikal\Prepare-IrinaBuilderOnF.ps1"
-~~~
-
-Изучите код. После этого запустите в разрешающей локальные скрипты PowerShell-сессии:
-
-~~~powershell
-& "F:\irinabaikal\Prepare-IrinaBuilderOnF.ps1"
-~~~
-
-При отказе политики исполнения PowerShell сначала проверьте `Get-ExecutionPolicy -List`, не меняйте системную политику постоянно. Скрипт остановит другие WSL-сеансы через `wsl --shutdown` и спросит подтверждение; сохраните незаконченные работы в WSL до запуска.
-
-**Без скрипта** эквивалентные команды (выполнять только после проверки F: и исходного WSL2):
-
-~~~powershell
-wsl --shutdown
-wsl --export Ubuntu-24.04 F:\irinabaikal\Ubuntu-24.04-export.tar
-wsl --import IrinaBuilder F:\irinabaikal\WSL-IrinaBuilder F:\irinabaikal\Ubuntu-24.04-export.tar --version 2
-~~~
-
-Никакого `wsl --unregister` не выполняем. Старый WSL оставляем. Экспортный TAR можно удалить **вручную после проверки**, что `IrinaBuilder` запускается, если требуется освободить место.
-
-## 3. Запустить сборку Ubuntu на WSL ext4
-
-В PowerShell:
-
-~~~powershell
-wsl -d IrinaBuilder -u root
-~~~
-
-В терминале IrinaBuilder (Linux):
-
-~~~bash
-apt-get update
-apt-get install -y git debootstrap ubuntu-keyring rsync squashfs-tools \
-  parted gdisk dosfstools e2fsprogs util-linux grub-efi-amd64-bin \
-  grub-common python3
-cd /root
-git clone https://github.com/musikfed/Irila_baikal_v1.0.git
-cd Irila_baikal_v1.0
-
-# Безопасная проверка loop/GPT внутри временного файла 96 MiB
-bash scripts/check_wsl_loop.sh
-
-# Создание rootfs -> SquashFS -> GPT/UEFI IMG -> копия на F:
-bash scripts/build_in_wsl.sh --core
-~~~
-
-Проверка loop/GPT **не обращается к физическим дискам**. Если WSL не поддерживает loop-разделы, остановитесь. Не подключайте через WSL физические SSD ради обхода этого ограничения. Можно использовать GitHub Actions или Ubuntu Live USB.
-
-`--core` — компактная первая версия XFCE/Irina Shell; `--full` добавляет LibreOffice, GIMP, Inkscape, Thunderbird, Linphone и мини-игры. Для `--full` может потребоваться `bash scripts/build_in_wsl.sh --full --max-image-mib 8192`; модель Qwen 8B не поместится в предел 5 ГиБ.
-
-### Где лежат файлы
-
-После **успешной** сборки и повторной проверки хеша:
+Они появляются **только при успешном завершении**:
 
 ~~~text
 F:\irinabaikal\irina_baikal_1.0.img
 F:\irinabaikal\irina_baikal_1.0.img.sha256
 ~~~
 
-Сборочные данные в `/srv/irina` внутри отдельного WSL `IrinaBuilder` тоже физически хранятся на F: в `WSL-IrinaBuilder\ext4.vhdx`, а не в каталоге NTFS. Если сборка завершилась ошибкой, готового пригодного образа **нет**.
-
-## 4. Проверить в Windows, затем записать на внешний SSD 256 ГБ
-
-После `exit` из WSL открыть PowerShell из исходного репозитория либо скачать [flash_irina.py](../scripts/flash_irina.py) в папку Windows:
+WSL скрипт сравнивает SHA256 образа до и после копирования. Дополнительно Windows-проверка, **только чтение**:
 
 ~~~powershell
 Invoke-WebRequest "https://raw.githubusercontent.com/musikfed/Irila_baikal_v1.0/main/scripts/flash_irina.py" -OutFile "F:\irinabaikal\flash_irina.py"
 py -3.13 "F:\irinabaikal\flash_irina.py" --image "F:\irinabaikal\irina_baikal_1.0.img"
 ~~~
 
-Скрипт проверяет SHA256 и перечисляет диски Windows **только для чтения**. После успешной проверки в [Rufus](https://rufus.ie/) выбрать внешний USB M.2 SSD **256 ГБ** и готовый IMG, записать в raw/DD-режиме, если запрашивается. Дополнительное форматирование не нужно. **Windows SSD 512 ГБ не выбирать.**
+Этот Python-скрипт только проверяет SHA и отображает сведения о дисках. Запись raw IMG на внешний накопитель им **не производится**.
 
-После завершения выключить Acer, нажать **F12** и выбрать внешний накопитель. При включённом Secure Boot неподписанный GRUB может быть заблокирован: до изменения настроек UEFI убедиться в наличии сохранённого ключа BitLocker/шифрования Windows.
+## 5. Запись на внешний SSD и первое включение Acer (отдельный этап!)
 
-## Статус и ограничения
+После готового IMG и корректного SHA256 в Rufus выбрать **только внешний USB M.2 SSD 256 ГБ**, который отображался как ~238,46 ГиБ неразмеченного места. **Не выбирать** NVMe ~512 ГБ с Windows, раздел F: или D:. Проверить модель, интерфейс USB и наличие/отсутствие диска при отсоединении и подключении. Номер диска может меняться. Rufus выполняет стирание *только вручную выбранного накопителя*; заранее разбивать диск на разделы не требуется.
 
-Это *экспериментальные* скрипты. Пройдены только базовые статические тесты, **полный реальный запуск в WSL и первая загрузка Acer ещё не подтверждены**. Система использует read-only SquashFS + RAM overlay, но не подписанный Rust UEFI загрузчик, не persistent DATA, не готовую Qwen 8B. Изменения и документы в RAM теряются при перезапуске. Нельзя хранить там рабочую почту и секреты до настройки постоянного DATA-раздела.
+После записи: выключить Acer, включить, выбрать внешний накопитель через **F12**. В текущем IMG неподписанный GRUB (не готовый Rust Secure Boot), поэтому при Secure Boot возможна ошибка. **Прежде чем менять UEFI/Secure Boot, заранее сохранить ключ восстановления BitLocker Windows.**
+
+**Статус:** полная сборка на Acer и первая физическая загрузка пока **не подтверждены**. Синтаксические проверки GitHub Actions — не доказательство готовности IMG.
+
+## 6. Ограничения первой сборки
+
+Профиль **core**: Ubuntu 24.04, XFCE, Irina Shell, базовые драйверы, браузер, Hrag, SquashFS и временный RAM OverlayFS. Полный профиль **full** включает LibreOffice, GIMP, Inkscape, Thunderbird, Linphone и игры, но может превысить лимит 5 ГиБ — пробовать только после core. Qwen 8B, сохранение данных на отдельном DATA и подписанный Rust EFI загрузчик **ещё не готовы**. Данные в RAM-overlay пропадают после перезагрузки.
+
+При проблемах с loop/GPT не подключать физические Windows-диски к WSL; альтернативы: [GitHub Actions сборка IMG](../.github/workflows/build-readonly-img.yml) или Ubuntu Live USB. Для восстановления WSL см. [WSL_RECOVERY.md](WSL_RECOVERY.md). **Не выполнять wsl --unregister.**
