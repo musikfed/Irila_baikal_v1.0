@@ -5,6 +5,9 @@ on:
       - 'scripts/prepare_source.sh'
       - 'scripts/bake_image.sh'
       - 'scripts/flash_irina.py'
+      - 'scripts/check_wsl_loop.sh'
+      - 'scripts/build_in_wsl.sh'
+      - 'windows/Prepare-IrinaBuilderOnF.ps1'
       - 'ai/hrag.py'
       - '.github/workflows/check-readonly-build.yml'
   pull_request:
@@ -25,12 +28,25 @@ jobs:
         run: |
           bash -n scripts/prepare_source.sh
           bash -n scripts/bake_image.sh
+          bash -n scripts/check_wsl_loop.sh
+          bash -n scripts/build_in_wsl.sh
           python -m py_compile scripts/flash_irina.py ai/hrag.py
       - name: Help commands do not write images
         run: |
           bash scripts/prepare_source.sh --help
           bash scripts/bake_image.sh --help
+          bash scripts/build_in_wsl.sh --help
           python scripts/flash_irina.py --help
+      - name: Check PowerShell source syntax without execution
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path 'windows/Prepare-IrinaBuilderOnF.ps1').Path,
+            [ref]$tokens, [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_ }; exit 1 }
       - name: Refuse building without privileges
         run: |
           ! bash scripts/prepare_source.sh --stage /tmp/irina-do-not-create
