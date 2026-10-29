@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+<defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#042e49"/><stop offset=".57" stop-color="#287f9b"/><stop offset="1" stop-color="#94ddc9"/></linearGradient>
+ <linearGradient id="lake" x2="0" y2="1"><stop stop-color="#2fb6b1"/><stop offset=".35" stop-color="#085e81"/><stop offset="1" stop-color="#042d4a"/></linearGradient>
+ <linearGradient id="mountain" x2="0" y2="1"><stop stop-color="#87d5ce"/><stop offset="1" stop-color="#0f6577"/></linearGradient>
+ <radialGradient id="sun"><stop stop-color="#c7fdf5" stop-opacity=".7"/><stop offset="1" stop-color="#bbf7f0" stop-opacity="0"/></radialGradient>
+ <filter id="blur"><feGaussianBlur stdDeviation="20"/></filter>
+</defs>
+<rect width="1920" height="1080" fill="url(#sky)"/><ellipse cx="1400" cy="270" rx="500" ry="300" fill="url(#sun)"/>
+<path d="M0 596 170 395 325 506 490 300 665 530 823 340 980 520 1190 345 1315 495 1510 365 1710 555 1920 407V755H0Z" fill="#124d65"/>
+<path d="M0 628 195 472 360 560 505 394 657 565 827 402 1042 575 1188 438 1370 566 1590 450 1750 573 1920 490V735H0Z" fill="url(#mountain)"/>
+<path d="M440 434 505 394 560 457 508 447ZM770 454 827 402 895 460 833 443ZM1140 485 1188 438 1238 487 1184 470ZM1545 482 1590 450 1635 490 1592 479Z" fill="#d8fcfa" opacity=".77"/>
+<rect y="642" width="1920" height="438" fill="url(#lake)"/>
+<path d="M0 644Q240 636 470 645T960 645T1440 645T1920 643" fill="none" stroke="#c0fff1" stroke-opacity=".5" stroke-width="5"/>
+<g stroke="#b5f5e5" stroke-opacity=".23" stroke-width="3" fill="none"><path d="M340 726Q650 713 980 725T1660 725"/><path d="M100 785Q540 769 1010 788T1920 784"/><path d="M0 875Q460 859 990 879T1920 881"/><path d="M160 996Q780 972 1420 993T1920 988"/></g>
+<path d="M0 780 142 721 214 749 288 734 350 787 340 1080H0ZM1920 815 1755 758 1695 803 1610 779 1542 828 1598 1080H1920Z" fill="#074454"/>
+<path d="M0 797 100 739 164 794 232 770 300 830 330 1080H0ZM1920 841 1805 794 1710 824 1645 797 1570 870 1600 1080H1920Z" fill="#083646"/>
+</svg>

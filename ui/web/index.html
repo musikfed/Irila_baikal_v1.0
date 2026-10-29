@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b5668">
+  <meta name="referrer" content="no-referrer">
+  <title>Ирина Байкал 1.0 · Irina Shell</title>
+  <link rel="icon" href="assets/irina-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-theme="lake">
+  <div class="wallpaper" role="img" aria-label="Стилизованный пейзаж озера Байкал"></div>
+  <header class="topbar">
+    <div class="brand-mini"><img src="assets/irina-mark.svg" alt="" width="30" height="30"><span>Ирина <b>Байкал</b> <small>1.0</small></span></div>
+    <div class="topbar-middle">PegiNelab OS <span class="live-dot"></span> Локальный рабочий стол</div>
+    <button id="quick-toggle" type="button" class="topbar-clock" aria-expanded="false" aria-controls="quick-settings">
+      <span id="clock-time">--:--</span><span id="clock-date">--</span><span aria-hidden="true">⌄</span>
+    </button>
+  </header>
+  <main id="desktop" aria-label="Рабочий стол">
+    <section class="welcome" aria-label="Приветствие">
+      <p class="eyebrow">ЛИЧНАЯ ОПЕРАЦИОННАЯ СИСТЕМА</p>
+      <h1>Ирина <span>Байкал</span><em> 1.0</em></h1>
+      <p>Технологии с характером Байкала.<br>Твой мир. Твой интеллект. Твоя связь.</p>
+      <div class="welcome-actions">
+        <button class="primary-button" type="button" data-app="ai">✦ Общение с Ириной</button>
+        <button class="glass-button" type="button" data-app="video">◉ Видеосвязь</button>
+      </div>
+    </section>
+    <nav class="desktop-apps" aria-label="Приложения рабочего стола">
+      <button type="button" data-app="camera"><span class="app-icon">◉</span><span>Селфи</span></button>
+      <button type="button" data-app="video"><span class="app-icon">▣</span><span>ВКС</span></button>
+      <button type="button" data-app="files"><span class="app-icon">▤</span><span>Файлы</span></button>
+      <button type="button" data-app="settings"><span class="app-icon">⚙</span><span>Параметры</span></button>
+    </nav>
+  </main>
+
+  <section id="windows" aria-label="Открытые окна"></section>
+
+  <aside id="launcher" class="popover launcher" hidden aria-label="Меню приложений">
+    <div class="popover-head"><img src="assets/irina-mark.svg" alt="" width="38" height="38"><div><strong>Ирина Байкал</strong><small>Главное меню · 1.0</small></div></div>
+    <div class="launcher-grid">
+      <button type="button" data-app="ai"><span>✦</span>ИИ Ирина</button>
+      <button type="button" data-app="camera"><span>◉</span>Камера</button>
+      <button type="button" data-app="video"><span>▣</span>Видеосвязь</button>
+      <button type="button" data-app="internet"><span>◎</span>Интернет</button>
+      <button type="button" data-app="files"><span>▤</span>Файлы</button>
+      <button type="button" data-app="settings"><span>⚙</span>Настройки</button>
+    </div>
+    <div class="launcher-bottom">Acer Swift 3 · Ryzen 5 3500U · Vega 8</div>
+  </aside>
+
+  <aside id="quick-settings" class="popover quick-settings" hidden aria-label="Быстрые настройки">
+    <strong>Оформление системы</strong>
+    <div class="theme-swatches">
+      <button type="button" class="theme-swatch lake-swatch" data-theme="lake" aria-label="Сине-зелёная тема"></button>
+      <button type="button" class="theme-swatch forest-swatch" data-theme="forest" aria-label="Зелёная тема"></button>
+      <button type="button" class="theme-swatch night-swatch" data-theme="night" aria-label="Ночная тема"></button>
+    </div>
+    <button type="button" class="quick-action" data-app="camera">◉ Круглая камера</button>
+    <button type="button" class="quick-action" data-app="settings">⚙ Все параметры</button>
+  </aside>
+
+  <aside id="camera-bubble" class="camera-bubble" hidden aria-label="Круглое окно селфи">
+    <video id="selfie-video" autoplay muted playsinline aria-label="Предпросмотр веб-камеры"></video>
+    <div id="camera-placeholder" class="camera-placeholder"><span>◉</span><small>Камера выключена</small></div>
+    <div class="camera-drag" id="camera-drag" title="Перемещать круглое окно">⋮⋮</div>
+    <div class="camera-controls">
+      <button type="button" id="camera-toggle" aria-label="Включить камеру" title="Включить камеру">▶</button>
+      <button type="button" id="camera-shot" disabled aria-label="Сделать селфи" title="Сделать селфи">◎</button>
+      <button type="button" id="camera-close" aria-label="Закрыть круглую камеру" title="Закрыть">×</button>
+    </div>
+  </aside>
+
+  <footer class="dock" aria-label="Панель задач">
+    <button id="start-button" type="button" class="start-button" aria-label="Открыть меню" aria-controls="launcher" aria-expanded="false"><img src="assets/irina-mark.svg" alt="" width="31" height="31"></button>
+    <span class="dock-divider" aria-hidden="true"></span>
+    <button type="button" class="dock-app" data-app="ai" title="ИИ Ирина">✦</button>
+    <button type="button" class="dock-app" data-app="internet" title="Интернет">◎</button>
+    <button type="button" class="dock-app" data-app="video" title="Видеосвязь">▣</button>
+    <button type="button" class="dock-app" data-app="camera" title="Селфи">◉</button>
+    <button type="button" class="dock-app" data-app="files" title="Файлы">▤</button>
+    <span class="dock-divider" aria-hidden="true"></span>
+    <button type="button" class="dock-app" data-app="settings" title="Параметры">⚙</button>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
