@@ -1,5 +1,17 @@
 # PegiNelab OS — «Ирина Байкал 1.0»
 
+## Второй образ для Secure Boot (первый сохраняется)
+
+Для Acer с Secure Boot **Enabled** есть отдельный экспериментальный вариант **`irina_baikal_1.0_secureboot.img`**: Microsoft-подписанный Ubuntu shim → Canonical-подписанный GRUB → подписанное ядро Ubuntu. **Старый `irina_baikal_1.0.img` и прежний сборщик остаются нетронутыми.** Для двух образов — разные GitHub Actions и разные артефакты. Приватные ключи и приватный репозиторий **не нужны**.
+
+- [**Подробная инструкция второго образа и проверки на Acer**](docs/SECURE_BOOT_SECOND_IMAGE.md)
+- [**GitHub Actions: Build Irina Baikal Secure Boot IMG**](.github/workflows/build-secureboot-img.yml)
+- [**Исходник второго, отдельного сборщика**](scripts/bake_image_secureboot.sh)
+
+**Важно:** Secure Boot-совместимость пока **экспериментальная** — наличие подписи ещё не доказывает, что UEFI Acer доверяет shim. Внешний SSD допускает запись только одного полного образа за раз; первый IMG можно восстановить из сохранённого файла на F: через Rufus. Windows/BitLocker/внутренние SSD не менять.
+
+---
+
 ## Основной способ: собрать IMG на GitHub Actions, без локального WSL
 
 **GitHub — основной источник проекта и сборок CI.** Реальный workflow [Build Irina Baikal read-only IMG](.github/workflows/build-readonly-img.yml) теперь запускается автоматически при изменении сборочных скриптов в main или вручную через GitHub → Actions → Build Irina Baikal read-only IMG → **Run workflow** → core / 5120 MiB.
