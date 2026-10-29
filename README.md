@@ -2,15 +2,17 @@
 
 ## Основной способ создания IMG: Windows 11 + установленная Ubuntu 24.04 в WSL2
 
+**Обновлено 29 октября 2026.** **Запускать из обычного PowerShell под своим Windows-пользователем, НЕ требуется «от имени администратора».** Внутри Ubuntu скрипт использует `wsl --user root`. GitHub CI проверяет скрипты и SHA256-копирование, но не полноценную сборку Acer.
+
 **Обновлено 29 октября 2026.** Для Acer Swift 3 SF314-41 WSL2 уже установлен, Ubuntu-24.04 запускается, DNS и HTTPS archive.ubuntu.com работают. Папка для результата — **F:\irinabaikal** (свободно ~253 ГиБ). **Не устанавливать вторую Ubuntu, не копировать и не удалять существующий WSL-дистрибутив.**
 
-**Используйте только [исправленный PowerShell-сценарий v2.1](windows/Build-IrinaViaWSL-v2.ps1)**. Старый windows/Build-IrinaViaWSL.ps1 вызывал ошибку «Ubuntu: -c: line 3: conditional binary operator expected» из-за передачи Bash-условий из PowerShell. Не используйте старую версию файла, даже если она осталась на F:.
+**Используйте только [исправленный PowerShell-сценарий v2.2](windows/Build-IrinaViaWSL-v2.ps1)**. Старый windows/Build-IrinaViaWSL.ps1 вызывал ошибку «Ubuntu: -c: line 3: conditional binary operator expected» из-за передачи Bash-условий из PowerShell. Не используйте старую версию файла, даже если она осталась на F:.
 
 В **PowerShell Windows 11** (подойдёт PS C:\WINDOWS\system32):
 
 ~~~powershell
 Invoke-WebRequest "https://raw.githubusercontent.com/musikfed/Irila_baikal_v1.0/main/windows/Build-IrinaViaWSL-v2.ps1" -OutFile "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1"
-Select-String -Path "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Pattern "IRINA WSL BUILDER v2.1", "--exec /bin/bash"
+Select-String -Path "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Pattern "IRINA WSL BUILDER v2.2", "--exec /bin/bash"
 Get-Content "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1"
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Distro Ubuntu-24.04 -CheckOnly
 ~~~
