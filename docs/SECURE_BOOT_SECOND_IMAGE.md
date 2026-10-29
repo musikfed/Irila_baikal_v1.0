@@ -4,7 +4,7 @@
 
 ## Два независимых образа
 
-| Вариант | Имя файла для Windows F:\\irinabaikal | GitHub Actions | Загрузка |
+| Вариант | Имя файла для Windows F:\irinabaikal | GitHub Actions | Загрузка |
 |---|---|---|---|
 | Первый, сохранённый | `irina_baikal_1.0.img` + `.sha256` | [Build Irina Baikal read-only IMG](../.github/workflows/build-readonly-img.yml) | Обычный, НЕподписанный GRUB; с включённым Secure Boot Acer уже выдал Security Boot Fail |
 | Второй, экспериментальный | `irina_baikal_1.0_secureboot.img` + `.sha256` | [Build Irina Baikal Secure Boot IMG](../.github/workflows/build-secureboot-img.yml) | Microsoft-подписанный Ubuntu shim → Canonical-подписанный GRUB → подписанное ядро Ubuntu |
@@ -28,7 +28,7 @@
 
 1. GitHub → репозиторий → **Actions** → **Build Irina Baikal Secure Boot IMG** → успешный запуск (workflow стартует также автоматически при изменении файла workflow / нового скрипта). Для ручного запуска: **Run workflow**, branch main, `profile=core`, `max_mib=5120`.
 2. Внизу успешного запуска найти **Artifacts → irina-baikal-1.0-secureboot-img**. Если статус Failure либо отсутствует артефакт — **скачивать нечего**; не использовать старый артефакт как новый.
-3. Сохранить ZIP и извлечь в `F:\\irinabaikal` оба файла:
+3. Сохранить ZIP и извлечь в `F:\irinabaikal` оба файла:
    - `irina_baikal_1.0_secureboot.img`
    - `irina_baikal_1.0_secureboot.img.sha256`
 4. Проверить только **НОВЫЙ** образ (обычный PowerShell):
