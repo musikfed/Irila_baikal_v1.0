@@ -8,7 +8,7 @@ param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference="Stop"
-Write-Host "IRINA WSL BUILDER v2.2 (file-based Bash runner, 2026-10-29)" -ForegroundColor Cyan
+Write-Host "IRINA WSL BUILDER v2.3 (file-based Bash runner, 2026-10-29)" -ForegroundColor Cyan
 function Fail([string]$message) { throw "IRINA WSL: $message" }
 
 if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) { Fail "WSL2 is not installed" }
@@ -44,8 +44,12 @@ function Invoke-IrinaWSLScript([string]$ScriptText, [string]$Phase) {
     $textLF = ($ScriptText -replace "`r`n", "`n") + "`n"
     [System.IO.File]::WriteAllText($winFile, $textLF, $utf8)
     Write-Host "IRINA WSL: $Phase" -ForegroundColor Cyan
-    & wsl.exe --distribution $Distro --user root --exec /bin/bash $linuxFile
-    return [int]$LASTEXITCODE
+    # Forward Linux stdout to the terminal instead of returning its text from this
+    # PowerShell function. Otherwise a WSL error line can become part of
+    # $preflightStatus, corrupting the numeric exit code (and error message).
+    & wsl.exe --distribution $Distro --user root --exec /bin/bash $linuxFile | Out-Host
+    $exitCode = [int]$LASTEXITCODE
+    return $exitCode
   }
   finally {
     if (Test-Path -LiteralPath $winFile) {
@@ -63,7 +67,9 @@ grep -qi microsoft /proc/sys/kernel/osrelease || { echo "Need WSL2" >&2; exit 2;
 echo "PASS: Ubuntu 24.04 + WSL2 + Linux ext4 staging + F: output"
 '@
 $preflightStatus = Invoke-IrinaWSLScript -ScriptText $preflight -Phase "Checking Ubuntu 24.04, WSL2 and F: mount"
-if ($preflightStatus -ne 0) { Fail "WSL preflight failed (code $preflightStatus); no build started" }
+if ($preflightStatus -ne 0) {
+  Fail "WSL preflight failed (exit code $preflightStatus); no build started. If you saw MountDisk/HCS/E_ACCESSDENIED for ext4.vhdx, first check Windows access/ownership of the WSL virtual disk (see docs/WSL_RECOVERY.md). Never unregister the distro."
+}
 if ($CheckOnly) {
   Write-Host "CHECK-ONLY PASS. No packages were installed and no IMG was created." -ForegroundColor Green
   Write-Host "NOTE: This does NOT verify loop/GPT capability, installed packages, full image build or Acer boot." -ForegroundColor Yellow
