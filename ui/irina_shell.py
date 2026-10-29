@@ -32,7 +32,7 @@ APP_COMMANDS = {
     "inkscape": ("inkscape",),
     "mail": ("thunderbird",),
     "sip": ("linphone",),
-    "solitaire": ("sol", "aisleriot"),
+    "solitaire": ("sol",),
     "mines": ("gnome-mines",),
     "mahjongg": ("gnome-mahjongg",),
 }
