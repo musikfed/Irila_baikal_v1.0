@@ -8,60 +8,62 @@ Windows 11 Pro на внутреннем SSD НЕ трогаем. Изолиро
 
 Ограничение готового IMG по умолчанию 5 ГиБ. Профиль --full и Qwen 8B могут превысить бюджет, тогда сборка честно прервётся. Начинать рекомендуется с --core. На этой стадии вместо Rust используется неподписанный GRUB. Подпись, Rust UEFI, постоянный /home и готовая модель Qwen ещё требуют отдельного этапа.
 
-## Вариант А: Windows 11 Pro + WSL2, без отдельной тестовой VM
+## Вариант А: основной, уже установленная Ubuntu 24.04 в WSL2
 
-WSL2 использует лёгкую виртуализацию для сборочных Linux-инструментов, но отдельную Ubuntu VM с графическим рабочим столом или QEMU создавать не надо.
+**Для Acer WSL2 уже установлена, Ubuntu-24.04 запускается, интернет работает. Не выполнять wsl --install, не создавать IrinaBuilder и не устанавливать отдельную VM.**
 
-В PowerShell администратора (если WSL2 ещё нет):
+Общий порядок: скачать исправленный PowerShell-сценарий v2.1 в F:\irinabaikal; выполнить безопасную проверку -CheckOnly; только после PASS запустить сборку core. **Актуальная подробная инструкция: [BUILD_WSL_F_DRIVE.md](BUILD_WSL_F_DRIVE.md).**
 
-~~~powershell
-wsl --install -d Ubuntu-24.04
-~~~
-
-После возможной перезагрузки:
+Из PowerShell Windows 11 (можно из C:\WINDOWS\system32):
 
 ~~~powershell
-wsl -d Ubuntu-24.04
+Invoke-WebRequest "https://raw.githubusercontent.com/musikfed/Irila_baikal_v1.0/main/windows/Build-IrinaViaWSL-v2.ps1" -OutFile "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1"
+
+Select-String -Path "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Pattern "IRINA WSL BUILDER v2.1", "--exec /bin/bash"
+Get-Content "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1"
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Distro Ubuntu-24.04 -CheckOnly
 ~~~
 
-В Ubuntu-терминале WSL2:
+Должно появиться:
 
-~~~bash
-sudo apt update
-sudo apt install -y git debootstrap ubuntu-keyring rsync squashfs-tools parted gdisk dosfstools e2fsprogs util-linux grub-efi-amd64-bin grub-common python3
-git clone https://github.com/musikfed/Irila_baikal_v1.0.git
-cd Irila_baikal_v1.0
-sudo bash scripts/prepare_source.sh --stage /srv/irina/rootfs --core
-sudo bash scripts/bake_image.sh --stage /srv/irina/rootfs --output /srv/irina/irina_baikal_1.0.img
-cd /srv/irina
-sha256sum -c irina_baikal_1.0.img.sha256
+~~~text
+IRINA WSL BUILDER v2.1 ...
+PASS: Ubuntu 24.04 + WSL2 + Linux ext4 staging + F: output
+CHECK-ONLY PASS. No packages were installed and no IMG was created.
 ~~~
 
-Важные условия: исходный rootfs должен лежать на файловой системе Linux внутри WSL, не в /mnt/c. Нужны десятки ГБ свободного места. WSL2 может не поддержать loop-разделы или нужные монтирования — в таком случае используйте Ubuntu Live-USB, а не подключайте физический внутренний SSD к WSL.
+После этого:
 
-Для полного офиса и графики вместо --core в первой команде выберите --full. Если готовая система не укладывается в лимит, параметр --max-image-mib 8192 в bake_image.sh разрешит больший образ. Не пытайтесь вместить Qwen 8B в 3–5 ГБ.
+~~~powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Distro Ubuntu-24.04 -Profile core
+~~~
+
+При запросе ввести **BUILD-IRINA**. Результат после полного успеха:
+
+~~~text
+F:\irinabaikal\irina_baikal_1.0.img
+F:\irinabaikal\irina_baikal_1.0.img.sha256
+~~~
+
+**Причина изменения:** старый windows/Build-IrinaViaWSL.ps1 выдавал «Ubuntu: -c: line 3: conditional binary operator expected» из-за PowerShell-передачи Bash-кода. **Не использовать старый файл даже если он присутствует на F:.** Новая v2.1 запускает временные Bash-файлы, сохраняя кавычки.
+
+Промежуточный Linux-корень создаётся в /srv/irina внутри уже установленной Ubuntu (физически на диске с её VHDX), готовые результаты копируются на F:. Видимые внутри WSL ~940 ГБ виртуального свободного места **не равны** реальному свободному месту диска с VHDX. Внешний SSD 256 ГБ на этом этапе не используется. Программа модифицирует установленный в Ubuntu набор *инструментов сборки*, но не должна удалять проекты. Нужна резервная копия важных Linux-файлов. Не запускать сразу несколько сборок.
 
 ## Вариант Б: Ubuntu Live USB, без какой-либо виртуализации
 
 Загрузить официальную Ubuntu 24.04 в режиме Try Ubuntu с ДРУГОЙ флешки через F12 (не устанавливать на внутренний SSD). Нужен отдельный Linux-носитель со свободным местом под сборку; нельзя строить образ на самом SSD, который затем будет очищен записью. В Ubuntu Live выполнить те же команды после установки зависимостей. Это работа с пакетами Linux, а не перенос Windows в Linux.
 
-## Перенос и запись в Windows
+## Проверка образа в Windows и запись на SSD
 
-В проводнике Windows образ WSL доступен по адресу:
-
-~~~text
-\\wsl.localhost\Ubuntu-24.04\srv\irina\
-~~~
-
-Скопировать IMG и .sha256 на файловую систему Windows. В Windows PowerShell запустить из папки репозитория (путь пример):
+Сборщик v2.1 при успешной сборке автоматически копирует IMG и SHA256 на **F:\irinabaikal**; вручную копировать файлы из \\wsl.localhost не требуется. Проверка на Windows:
 
 ~~~powershell
-py -3.13 scripts\flash_irina.py --image "C:\IrinaBaikal\irina_baikal_1.0.img"
+Invoke-WebRequest "https://raw.githubusercontent.com/musikfed/Irila_baikal_v1.0/main/scripts/flash_irina.py" -OutFile "F:\irinabaikal\flash_irina.py"
+py -3.13 "F:\irinabaikal\flash_irina.py" --image "F:\irinabaikal\irina_baikal_1.0.img"
 ~~~
 
-Скрипт ПРОВЕРЯЕТ SHA256 и показывает диски ТОЛЬКО ДЛЯ ЧТЕНИЯ. Он не форматирует и не записывает ничего в Windows. Затем в Rufus https://rufus.ie/ вручную выбрать только внешний пустой M.2 SSD 256 ГБ USB 3.0 и IMG. Если Rufus предлагает DD/raw — использовать его. Разметка GPT/EFI появится автоматически, заранее форматировать не нужно.
-
-Перед выбором внешнего USB-диска убедиться по BusType USB, модели, 256 ГБ, флагам IsSystem/IsBoot=false и физическому отключению/подключению, что это НЕ внутренний SSD с Windows. На внутреннем Windows SSD ничего не меняем. Файлы .FAILED нельзя записывать на диск.
+Скрипт только сверяет SHA256 и показывает сведения о дисках для чтения. После успешной проверки Rufus https://rufus.ie/ → выбрать **только отдельный внешний SSD 256 ГБ USB 3.0** (~238,46 ГиБ) → записать IMG как raw/DD, если Rufus это предлагает. Весь выбранный накопитель стирается. Не выбирать внутренний Windows NVMe ~512 ГБ, D: или F:. Номер диска не является надёжным идентификатором — сверять USB, модель, размер и отключение/подключение. Дополнительно форматировать SSD не нужно.
 
 ## Первая загрузка
 
