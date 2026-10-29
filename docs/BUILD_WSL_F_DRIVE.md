@@ -1,5 +1,26 @@
 # Ирина Байкал 1.0: сборка через существующий WSL2 на диске F:
 
+## Исправление ошибки `Ubuntu: -c: line 3: conditional binary operator expected`
+
+Эта ошибка возникает при запуске **старой закешированной PowerShell-версии**, которая передаёт многострочные Bash-команды через `bash -lc` из Windows. Сборка при такой ошибке **не начинается**.
+
+**Использовать новый файл с отдельным именем `Build-IrinaViaWSL-v2.ps1`**, а не прежний `Build-IrinaViaWSL.ps1`:
+
+```powershell
+Invoke-WebRequest "https://raw.githubusercontent.com/musikfed/Irila_baikal_v1.0/main/windows/Build-IrinaViaWSL-v2.ps1" -OutFile "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1"
+Select-String -Path "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Pattern "IRINA WSL BUILDER v2.1", "--exec /bin/bash"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Distro Ubuntu-24.04 -CheckOnly
+```
+
+Если видны `IRINA WSL BUILDER v2.1`, затем `PASS: Ubuntu 24.04...` и `CHECK-ONLY PASS`, то сценарий исправлен. Только после этого запускайте его без `-CheckOnly`:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Distro Ubuntu-24.04 -Profile core
+```
+
+Сценарий v2 сохраняет команды во временный UTF-8 LF-файл на F: и запускает их через `wsl.exe --exec /bin/bash /mnt/f/.../file.sh`. Это сохраняет кавычки Bash. Временный файл удаляется автоматически. **Не запускайте оба варианта одновременно.**
+
+
 > **Если WSL перестал запускаться:** не продолжайте копирование и сборку. Сначала откройте [безопасную диагностику WSL](WSL_RECOVERY.md). Ошибка `WSL_E_DISTRO_NOT_FOUND` для `IrinaBuilder` до завершения импорта не означает пропажу основной Ubuntu. Экспортирование рабочей Ubuntu копирует все проекты и возможные закрытые файлы — не публикуйте архив или VHDX.
 
 ## Быстрый запуск из PowerShell — новый WSL-сборщик
