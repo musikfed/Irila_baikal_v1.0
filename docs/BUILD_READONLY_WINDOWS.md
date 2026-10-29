@@ -10,16 +10,19 @@ Windows 11 Pro на внутреннем SSD НЕ трогаем. Изолиро
 
 ## Вариант А: основной, уже установленная Ubuntu 24.04 в WSL2
 
+**PowerShell Windows запускать в обычном режиме, без «Запуск от имени администратора».** Команда с `wsl --user root` выполняет Linux-операции с необходимыми правами. После замены кода сборщика необходимо снова скачать v2.2 перед запуском. Тест `-CheckOnly` не проверяет loop/GPT или реальную загрузку образа.
+
+
 **Для Acer WSL2 уже установлена, Ubuntu-24.04 запускается, интернет работает. Не выполнять wsl --install, не создавать IrinaBuilder и не устанавливать отдельную VM.**
 
-Общий порядок: скачать исправленный PowerShell-сценарий v2.1 в F:\irinabaikal; выполнить безопасную проверку -CheckOnly; только после PASS запустить сборку core. **Актуальная подробная инструкция: [BUILD_WSL_F_DRIVE.md](BUILD_WSL_F_DRIVE.md).**
+Общий порядок: скачать исправленный PowerShell-сценарий v2.2 в F:\irinabaikal; выполнить безопасную проверку -CheckOnly; только после PASS запустить сборку core. **Актуальная подробная инструкция: [BUILD_WSL_F_DRIVE.md](BUILD_WSL_F_DRIVE.md).**
 
 Из PowerShell Windows 11 (можно из C:\WINDOWS\system32):
 
 ~~~powershell
 Invoke-WebRequest "https://raw.githubusercontent.com/musikfed/Irila_baikal_v1.0/main/windows/Build-IrinaViaWSL-v2.ps1" -OutFile "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1"
 
-Select-String -Path "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Pattern "IRINA WSL BUILDER v2.1", "--exec /bin/bash"
+Select-String -Path "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Pattern "IRINA WSL BUILDER v2.2", "--exec /bin/bash"
 Get-Content "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1"
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Distro Ubuntu-24.04 -CheckOnly
@@ -28,7 +31,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "F:\irinabaikal\Build-Ir
 Должно появиться:
 
 ~~~text
-IRINA WSL BUILDER v2.1 ...
+IRINA WSL BUILDER v2.2 ...
 PASS: Ubuntu 24.04 + WSL2 + Linux ext4 staging + F: output
 CHECK-ONLY PASS. No packages were installed and no IMG was created.
 ~~~
@@ -46,7 +49,7 @@ F:\irinabaikal\irina_baikal_1.0.img
 F:\irinabaikal\irina_baikal_1.0.img.sha256
 ~~~
 
-**Причина изменения:** старый windows/Build-IrinaViaWSL.ps1 выдавал «Ubuntu: -c: line 3: conditional binary operator expected» из-за PowerShell-передачи Bash-кода. **Не использовать старый файл даже если он присутствует на F:.** Новая v2.1 запускает временные Bash-файлы, сохраняя кавычки.
+**Причина изменения:** старый windows/Build-IrinaViaWSL.ps1 выдавал «Ubuntu: -c: line 3: conditional binary operator expected» из-за PowerShell-передачи Bash-кода. **Не использовать старый файл даже если он присутствует на F:.** Новая v2.2 запускает временные Bash-файлы, сохраняя кавычки.
 
 Промежуточный Linux-корень создаётся в /srv/irina внутри уже установленной Ubuntu (физически на диске с её VHDX), готовые результаты копируются на F:. Видимые внутри WSL ~940 ГБ виртуального свободного места **не равны** реальному свободному месту диска с VHDX. Внешний SSD 256 ГБ на этом этапе не используется. Программа модифицирует установленный в Ubuntu набор *инструментов сборки*, но не должна удалять проекты. Нужна резервная копия важных Linux-файлов. Не запускать сразу несколько сборок.
 
@@ -56,7 +59,7 @@ F:\irinabaikal\irina_baikal_1.0.img.sha256
 
 ## Проверка образа в Windows и запись на SSD
 
-Сборщик v2.1 при успешной сборке автоматически копирует IMG и SHA256 на **F:\irinabaikal**; вручную копировать файлы из \\wsl.localhost не требуется. Проверка на Windows:
+Сборщик v2.2 при успешной сборке автоматически копирует IMG и SHA256 на **F:\irinabaikal**; вручную копировать файлы из \\wsl.localhost не требуется. Проверка на Windows:
 
 ~~~powershell
 Invoke-WebRequest "https://raw.githubusercontent.com/musikfed/Irila_baikal_v1.0/main/scripts/flash_irina.py" -OutFile "F:\irinabaikal\flash_irina.py"
