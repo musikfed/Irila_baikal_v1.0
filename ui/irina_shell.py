@@ -28,6 +28,7 @@ APP_COMMANDS = {
     "impress": ("libreoffice", "--impress"),
     "draw": ("libreoffice", "--draw"),
     "base": ("libreoffice", "--base"),
+    "math": ("libreoffice", "--math"),
     "gimp": ("gimp",),
     "inkscape": ("inkscape",),
     "mail": ("thunderbird",),
