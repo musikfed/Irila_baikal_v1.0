@@ -71,12 +71,16 @@ jobs:
           for deb in ./*.deb; do
             dpkg-deb --extract "$deb" /tmp/irina-secure-boot-assets
           done
-          test -s /tmp/irina-secure-boot-assets/usr/lib/shim/shimx64.efi.signed.latest
+          test -s /tmp/irina-secure-boot-assets/usr/lib/shim/shimx64.efi.dualsigned
           test -s /tmp/irina-secure-boot-assets/usr/lib/shim/mmx64.efi
           test -s /tmp/irina-secure-boot-assets/usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed
-          for f in             /tmp/irina-secure-boot-assets/usr/lib/shim/shimx64.efi.signed.latest             /tmp/irina-secure-boot-assets/usr/lib/shim/mmx64.efi             /tmp/irina-secure-boot-assets/usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed; do
+          for f in \
+            /tmp/irina-secure-boot-assets/usr/lib/shim/shimx64.efi.dualsigned \
+            /tmp/irina-secure-boot-assets/usr/lib/shim/mmx64.efi \
+            /tmp/irina-secure-boot-assets/usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed; do
             sbverify --list "$f"
           done
+          sbverify --list /tmp/irina-secure-boot-assets/usr/lib/shim/shimx64.efi.dualsigned | grep -Eq 'signature 2'
       - name: Prepare Ubuntu 24.04 stage with casper
         run: |
           sudo bash scripts/prepare_source.sh --stage /srv/irina/rootfs "--$IMG_PROFILE"
