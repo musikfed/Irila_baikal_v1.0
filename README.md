@@ -1,6 +1,15 @@
 # PegiNelab OS — «Ирина Байкал 1.0»
 
-## Основной способ создания IMG: Windows 11 + установленная Ubuntu 24.04 в WSL2
+## Основной способ: собрать IMG на GitHub Actions, без локального WSL
+
+**GitHub — основной источник проекта и сборок CI.** Реальный workflow [Build Irina Baikal read-only IMG](.github/workflows/build-readonly-img.yml) теперь запускается автоматически при изменении сборочных скриптов в main или вручную через GitHub → Actions → Build Irina Baikal read-only IMG → **Run workflow** → core / 5120 MiB.
+
+**Главная пошаговая инструкция:** [docs/GITHUB_CI_PRIMARY.md](docs/GITHUB_CI_PRIMARY.md) — успешный workflow → скачать IMG и SHA256 из Artifacts → проверить SHA в Windows → только затем вручную записать на отдельный внешний SSD 256 ГБ через Rufus → загрузить Acer F12.
+
+На D: локальная WSL временно недоступна из-за MountDisk/HCS/E_ACCESSDENIED. **Это не влияет на GitHub Actions и не мешает облачной сборке.** Локальную WSL не нужно ремонтировать или удалять ради CI. Если пользователь решил полностью очистить её после переноса всех проектов в GitHub, безопасные границы операции и команда wsl --unregister приведены в главной инструкции. **Не форматировать D:, F: или внутренний Windows SSD.**
+
+---
+## Дополнительный локальный способ: Windows 11 + Ubuntu 24.04 в WSL2
 
 **Обновлено 29 октября 2026.** **Запускать из обычного PowerShell под своим Windows-пользователем, НЕ требуется «от имени администратора».** Внутри Ubuntu скрипт использует `wsl --user root`. GitHub CI проверяет скрипты и SHA256-копирование, но не полноценную сборку Acer.
 
