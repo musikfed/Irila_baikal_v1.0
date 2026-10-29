@@ -41,7 +41,7 @@ done
 [[ "$MAX_MIB" =~ ^[0-9]+$ ]] || die 'Bad --max-image-mib'
 ((MAX_MIB>=3072 && MAX_MIB<=32768)) || die 'Image size cap must be 3072..32768 MiB'
 [[ "$(uname -m)" == x86_64 ]] || die 'Need x86_64 Linux builder'
-for c in mksquashfs parted partprobe partx udevadm losetup mkfs.vfat mkfs.ext4 sbverify sha256sum stat mount umount; do
+for c in mksquashfs unsquashfs parted partprobe partx udevadm losetup mkfs.vfat mkfs.ext4 sbverify sha256sum stat mount umount; do
   command -v "$c" >/dev/null || die "Install missing tool: $c"
 done
 [[ -d "$STAGE/etc" && -d "$STAGE/usr" && -d "$STAGE/opt/irina/ui" ]] || die 'Stage not prepared by prepare_source.sh'
@@ -65,8 +65,22 @@ echo "IRINA SECURE BOOT: Ubuntu shim, GRUB, MokManager and kernel carry EFI sign
 mkdir -p "$(dirname "$OUT")"
 TMP="$(mktemp -d /var/tmp/irina-bake.XXXXXXXX)"
 echo "IRINA: packing rootfs into SquashFS (zstd, level 17) ..."
+# Do NOT exclude /dev /proc /sys /run /tmp /mnt /media by name!
+# -e dev proc ... removes the DIRECTORIES themselves from the SquashFS,
+# so casper cannot move /dev -> /root/dev or create /tmp and panics at PID 1.
+# prepare_source.sh has already unmounted chroot bind mounts and the
+# findmnt preflight above forbids any remaining mounted foreign FS.
 mksquashfs "$STAGE" "$TMP/filesystem.squashfs" -noappend -comp zstd -Xcompression-level 17 \
-  -one-file-system -e dev proc sys run tmp mnt media
+  -one-file-system
+# Verify the *packed image*, not just stage: these directories MUST exist
+# for initramfs-tools/casper root switch and for /tmp operations.
+SQUASH_LIST="$TMP/squashfs-paths.txt"
+unsquashfs -ll "$TMP/filesystem.squashfs" | awk '{print $NF}' > "$SQUASH_LIST"
+for required_dir in dev proc sys run tmp mnt media; do
+  grep -Fqx "squashfs-root/$required_dir" "$SQUASH_LIST" || \
+    die "SquashFS missing /$required_dir: casper init would panic"
+done
+echo 'PASS: SquashFS contains /dev /proc /sys /run /tmp /mnt /media for casper.'
 SQUASH_BYTES="$(stat -c %s "$TMP/filesystem.squashfs")"
 KERNEL_BYTES="$(stat -c %s "$STAGE/boot/vmlinuz-$VER")"
 INITRD_BYTES="$(stat -c %s "$STAGE/boot/initrd.img-$VER")"
@@ -127,11 +141,11 @@ set timeout=5
 set default=0
 search --no-floppy --label IRINA_EFI --set=efiroot
 menuentry "Irina Baikal 1.0 - Secure Boot / RAM Overlay" {
-  linux ($efiroot)/casper/vmlinuz boot=casper nopersistent username=irina hostname=irina-baikal ro quiet
+  linux ($efiroot)/casper/vmlinuz boot=casper live-media=/dev/disk/by-label/IRINA_LIVE nopersistent username=irina hostname=irina-baikal ro quiet
   initrd ($efiroot)/casper/initrd
 }
 menuentry "Irina Baikal 1.0 - Secure Boot diagnostics" {
-  linux ($efiroot)/casper/vmlinuz boot=casper nopersistent username=irina hostname=irina-baikal ro
+  linux ($efiroot)/casper/vmlinuz boot=casper live-media=/dev/disk/by-label/IRINA_LIVE nopersistent username=irina hostname=irina-baikal ro
   initrd ($efiroot)/casper/initrd
 }
 GRUB
