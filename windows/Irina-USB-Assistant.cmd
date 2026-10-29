@@ -111,7 +111,7 @@ $check.Add_Click({
         }
 
         # Win32_DiskDrive is readable by a standard Windows user. We never
-        # use diskpart, disk numbers for writing, or disk initialization.
+        # issue any disk-write commands, reformat volumes or initialize disks.
         $disks = @(
             Get-CimInstance -ClassName Win32_DiskDrive -ErrorAction Stop |
                 Where-Object {
