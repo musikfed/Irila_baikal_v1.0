@@ -114,6 +114,8 @@ sync
 umount "$MNT"
 losetup -d "$LOOP"; LOOP=""
 sha256sum "$OUT" > "$OUT.sha256"
+# Let the ordinary Windows/WSL user copy the completed build artifacts.
+chmod 644 "$OUT" "$OUT.sha256"
 READY=1
 echo "READY: $OUT"
 echo "SHA256: $OUT.sha256"
