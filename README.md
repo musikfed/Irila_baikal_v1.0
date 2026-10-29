@@ -1,5 +1,19 @@
 # PegiNelab OS — Ирина Байкал 1.0
 
+## ВАЖНО: основной путь сборки — Source → SquashFS → UEFI, без обязательной VM
+
+Первоначальное ТЗ **не предусматривало установку обычной Ubuntu в виртуальную машину и создание постоянного ext4-корня**. Основной вариант теперь описан в [DIRECT_NO_VM_READONLY_PLAN.md](docs/DIRECT_NO_VM_READONLY_PLAN.md).
+
+- **Windows 11 Pro** на Acer — пульт разработки и программа записи IMG на пустой USB M.2 SSD 256 ГБ, **не Linux-источник**.
+- Linux Source должен быть работающей Ubuntu/Debian (например, Ubuntu 24.04 Live-USB) либо Linux-средой WSL2 для подготовки системы. Если источник Ubuntu отсутствует, можно использовать официальный [Ubuntu Base amd64](https://cdimages.ubuntu.com/ubuntu-base/releases/24.04/release/) и добавить ядро/пакеты.
+- Boot: UEFI → Linux kernel + casper initramfs → Read-Only `filesystem.squashfs` → OverlayFS в RAM. Файлы пользователя — отдельно на постоянном DATA-разделе SSD.
+- **Проверка через QEMU/KVM опциональна**. Первая загрузка на Acer по F12 может быть непосредственным тестом с риском ошибки загрузки.
+- Старый `scripts/build_irina_img.sh` **не соответствует финальному ТЗ**: создаёт экспериментальный 16-GiB образ с записываемым ext4 root.
+- Rust EFI Secure Boot, Hrag, модель Ollama и компактная сборка **вместе ещё не подтверждены**. Готовый `irina_baikal_1.0.img` в репозитории пока отсутствует.
+
+---
+
+
 **Статус: ранний прототип (Irina Shell v0.5); загрузочный IMG ещё не выпущен.**
 
 Независимая переносная ОС для **Acer Swift 3 SF314-41** (AMD Ryzen 5 3500U, Radeon Vega 8, 20 ГБ RAM), которая запускается с **внешнего M.2 SSD 256 ГБ по USB 3.0** через меню UEFI F12. Основной Windows 11 Pro не заменяется и не форматируется.
