@@ -110,7 +110,16 @@
     if(cameraBusy)return; cameraBusy=true;
     try {
       if(!navigator.mediaDevices?.getUserMedia) throw new Error('Камера доступна только через localhost или HTTPS и в совместимом браузере.');
-      cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280}},audio:false});
+      // Some USB/UVC cameras or WebKitGTK/Epiphany engines on Acer reject
+      // optional facingMode/width as "Invalid constraint". Only fall back on
+      // unsupported/overconstrained parameters; permission denial remains final.
+      try {
+        cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280}},audio:false});
+      } catch(err) {
+        if (!['OverconstrainedError','ConstraintNotSatisfiedError','TypeError'].includes(err?.name)
+            && !/invalid constraint/i.test(err?.message || '')) throw err;
+        cameraStream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
+      }
       video.srcObject=cameraStream;await video.play();placeholder.hidden=true;$('#camera-toggle').textContent='■';$('#camera-toggle').title='Выключить камеру';$('#camera-shot').disabled=false;
       toast('Камера активна. Кадры остаются на устройстве.');
     } catch(e){toast('Камера недоступна: '+(e.message||'проверь разрешение браузера'));stopCamera();}
