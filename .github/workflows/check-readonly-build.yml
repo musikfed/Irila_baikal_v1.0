@@ -14,6 +14,11 @@ on:
       - 'hardware/acer_swift3_sf314-41.json'
       - '.github/workflows/build-installed-secureboot-img.yml'
       - 'tests/test_installed_image.py'
+      - 'tests/test_first_boot_evidence.py'
+      - 'scripts/build_first_boot_gallery.py'
+      - '.github/workflows/publish-first-boot-gallery.yml'
+      - '.github/workflows/build-installed-full-secureboot-img.yml'
+      - 'audio/generate_intro.py'
       - 'scripts/flash_irina.py'
       - 'scripts/check_wsl_loop.sh'
       - 'scripts/build_in_wsl.sh'
@@ -26,6 +31,11 @@ on:
       - 'hardware/acer_swift3_sf314-41.json'
       - '.github/workflows/build-installed-secureboot-img.yml'
       - 'tests/test_installed_image.py'
+      - 'tests/test_first_boot_evidence.py'
+      - 'scripts/build_first_boot_gallery.py'
+      - '.github/workflows/publish-first-boot-gallery.yml'
+      - '.github/workflows/build-installed-full-secureboot-img.yml'
+      - 'audio/generate_intro.py'
       - 'windows/Irina-USB-Assistant.cmd'
       - 'windows/Prepare-IrinaBuilderOnF.ps1'
       - 'windows/Build-IrinaViaWSL.ps1'
@@ -60,11 +70,12 @@ jobs:
           bash -n scripts/irina_auto_provision.sh
           bash -n scripts/check_wsl_loop.sh
           bash -n scripts/build_in_wsl.sh
-          python -m py_compile scripts/flash_irina.py ai/hrag.py ui/irina_setup_status.py
+          python -m py_compile scripts/flash_irina.py ai/hrag.py ui/irina_setup_status.py scripts/build_first_boot_gallery.py audio/generate_intro.py
       - name: Check portable SHA256 and Windows WSL script dependencies
         run: |
           python3 -m unittest discover -s tests -p 'test_readonly_pipeline.py' -v
           python3 -m unittest discover -s tests -p 'test_installed_image.py' -v
+          python3 -m unittest discover -s tests -p 'test_first_boot_evidence.py' -v
       - name: Help commands do not write images
         run: |
           bash scripts/prepare_source.sh --help
