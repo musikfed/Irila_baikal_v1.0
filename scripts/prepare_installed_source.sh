@@ -47,7 +47,7 @@ chroot "$STAGE" apt-get purge -y casper
 # Keep initial image compact: desktop apps are installed later when Wi-Fi works.
 chroot "$STAGE" apt-get install -y --no-install-recommends \
   cloud-guest-utils gdisk e2fsprogs util-linux pciutils usbutils \
-  sudo python3-gi gir1.2-gtk-3.0 \
+  sudo python3-gi gir1.2-gtk-3.0 xfce4-screenshooter \
   curl wget ca-certificates
 cat > "$STAGE/etc/fstab" <<'FSTAB'
 LABEL=IRINA_ROOT / ext4 defaults,noatime,errors=remount-ro 0 1
