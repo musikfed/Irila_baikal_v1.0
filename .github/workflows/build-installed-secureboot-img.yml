@@ -14,6 +14,8 @@ on:
       - 'scripts/irina_grow_usb_root.sh'
       - 'scripts/irina_auto_provision.sh'
       - 'ui/irina_setup_status.py'
+      - 'audio/play_intro.sh'
+      - 'ui/web/assets/irina_intro.mp3'
       - 'scripts/prepare_source.sh'
       - 'hardware/acer_swift3_sf314-41.json'
   workflow_dispatch:
