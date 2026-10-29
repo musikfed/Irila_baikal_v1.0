@@ -100,6 +100,9 @@ jobs:
             throw "Native process stdout corrupted numeric exit status: '$code'"
           }
           Write-Host "PASS: native command output never replaces exit status"
+          # PowerShell exits with the final native failure status even when our
+          # assertion passes; reset only the CI test shell's native exit code.
+          & bash -c 'exit 0'
       - name: Refuse building without privileges
         run: |
           ! bash scripts/prepare_source.sh --stage /tmp/irina-do-not-create
