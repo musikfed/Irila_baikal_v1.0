@@ -41,6 +41,9 @@ if (Test-Path $install) { Fail "Existing build folder will not be overwritten: $
 Write-Host "Source WSL: $SourceDistro. Independent build copy will be on F:" -ForegroundColor Cyan
 Write-Host "F: disk: $($disk.FriendlyName), $sizeGb GiB, Bus=$($disk.BusType)"
 Write-Host "Original Ubuntu remains untouched. Running WSL sessions will stop during export." -ForegroundColor Yellow
+Write-Host "WARNING: This exports ALL files of the source Ubuntu, including projects and any credentials/2FA keys stored in it." -ForegroundColor Yellow
+Write-Host "DO NOT upload the export TAR or the resulting WSL VHDX to GitHub; a clean builder distro is preferable when secrets exist." -ForegroundColor Yellow
+Write-Host "If WSL is currently unable to start, CANCEL here and follow docs/WSL_RECOVERY.md first." -ForegroundColor Yellow
 $consent = Read-Host "Type COPY-IRINA to export/import independent Ubuntu WSL2 distro"
 if ($consent -cne "COPY-IRINA") { Fail "Cancelled, no changes made" }
 New-Item -ItemType Directory -Path $Destination -Force | Out-Null
