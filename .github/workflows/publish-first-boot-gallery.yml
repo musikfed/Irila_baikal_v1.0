@@ -1,0 +1,65 @@
+name: Publish first-boot Acer gallery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/first_boot/photos-source.zip'
+      - 'scripts/build_first_boot_gallery.py'
+      - '.github/workflows/publish-first-boot-gallery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: irina-first-boot-gallery-main
+  cancel-in-progress: false
+
+jobs:
+  gallery:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Check first-boot ZIP is present
+        id: archive
+        run: |
+          if test -f docs/first_boot/photos-source.zip; then
+            echo 'present=yes' >> "$GITHUB_OUTPUT"
+          else
+            echo 'present=no' >> "$GITHUB_OUTPUT"
+            echo 'No first-boot ZIP committed yet. Upload archive via GitHub web (Add file > Upload files).'
+          fi
+      - name: Install Pillow (no external image-generation service)
+        if: steps.archive.outputs.present == 'yes'
+        run: |
+          python3 -m venv /tmp/irina-gallery-venv
+          /tmp/irina-gallery-venv/bin/pip install --disable-pip-version-check 'Pillow>=10,<13'
+      - name: Build EXIF-free photo gallery from 18 original Acer photos
+        if: steps.archive.outputs.present == 'yes'
+        run: |
+          /tmp/irina-gallery-venv/bin/python scripts/build_first_boot_gallery.py \
+            --zip docs/first_boot/photos-source.zip --output docs/first_boot
+          test "$(find docs/first_boot/photos -maxdepth 1 -name '*.jpg' | wc -l)" -eq 18
+          sed -n '1,32p' docs/first_boot/index.md
+      - name: Commit photo previews and Markdown gallery
+        if: steps.archive.outputs.present == 'yes'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/first_boot/photos docs/first_boot/index.md
+          if git diff --cached --quiet; then
+            echo 'Gallery already current.'
+            exit 0
+          fi
+          git commit -m 'docs(gallery): publish first Acer boot photo evidence'
+          for attempt in 1 2 3; do
+            git fetch --quiet origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          echo 'Failed to publish gallery to latest main' >&2
+          exit 1
