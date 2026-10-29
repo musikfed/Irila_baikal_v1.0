@@ -97,4 +97,4 @@ jobs:
           path: output/
           if-no-files-found: error
           compression-level: 1
-          retention-days: 1
+          retention-days: 30
