@@ -21,7 +21,7 @@ class EvidenceAndFullCI(unittest.TestCase):
         self.assertIn("photo.save(", code)
         self.assertNotIn(".extractall(", code)
         self.assertIn("re.fullmatch(", code)
-        self.assertIn("image.width", code) if "image.width" in code else self.assertIn("source.width", code)
+        self.assertIn("source.width", code)
         wf = read(".github/workflows/publish-first-boot-gallery.yml")
         self.assertIn("photos-source.zip", wf)
         self.assertIn("build_first_boot_gallery.py", wf)
@@ -49,7 +49,6 @@ class EvidenceAndFullCI(unittest.TestCase):
         audio = read("audio/generate_intro.py")
         ast.parse(audio)
         self.assertIn("def lake_background", audio)
-        self.assertIn("Created", "Created")  # Keep this test free of TTS dependency.
         self.assertIn("Создана за пять часов", audio)
         self.assertIn("choices=('lake', 'cosmic')", audio)
         js = read("ui/web/app.js")
