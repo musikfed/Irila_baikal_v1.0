@@ -6,10 +6,26 @@ on:
       - 'scripts/bake_image.sh'
       - 'scripts/bake_image_secureboot.sh'
       - '.github/workflows/build-secureboot-img.yml'
+      - 'scripts/prepare_installed_source.sh'
+      - 'scripts/bake_image_installed_secureboot.sh'
+      - 'scripts/irina_grow_usb_root.sh'
+      - 'scripts/irina_auto_provision.sh'
+      - 'ui/irina_setup_status.py'
+      - 'hardware/acer_swift3_sf314-41.json'
+      - '.github/workflows/build-installed-secureboot-img.yml'
+      - 'tests/test_installed_image.py'
       - 'scripts/flash_irina.py'
       - 'scripts/check_wsl_loop.sh'
       - 'scripts/build_in_wsl.sh'
       - 'tests/test_readonly_pipeline.py'
+      - 'scripts/prepare_installed_source.sh'
+      - 'scripts/bake_image_installed_secureboot.sh'
+      - 'scripts/irina_grow_usb_root.sh'
+      - 'scripts/irina_auto_provision.sh'
+      - 'ui/irina_setup_status.py'
+      - 'hardware/acer_swift3_sf314-41.json'
+      - '.github/workflows/build-installed-secureboot-img.yml'
+      - 'tests/test_installed_image.py'
       - 'windows/Prepare-IrinaBuilderOnF.ps1'
       - 'windows/Build-IrinaViaWSL.ps1'
       - 'windows/Build-IrinaViaWSL-v2.ps1'
@@ -37,12 +53,17 @@ jobs:
           bash -n scripts/prepare_source.sh
           bash -n scripts/bake_image.sh
           bash -n scripts/bake_image_secureboot.sh
+          bash -n scripts/prepare_installed_source.sh
+          bash -n scripts/bake_image_installed_secureboot.sh
+          bash -n scripts/irina_grow_usb_root.sh
+          bash -n scripts/irina_auto_provision.sh
           bash -n scripts/check_wsl_loop.sh
           bash -n scripts/build_in_wsl.sh
-          python -m py_compile scripts/flash_irina.py ai/hrag.py
+          python -m py_compile scripts/flash_irina.py ai/hrag.py ui/irina_setup_status.py
       - name: Check portable SHA256 and Windows WSL script dependencies
         run: |
           python3 -m unittest discover -s tests -p 'test_readonly_pipeline.py' -v
+          python3 -m unittest discover -s tests -p 'test_installed_image.py' -v
       - name: Help commands do not write images
         run: |
           bash scripts/prepare_source.sh --help
