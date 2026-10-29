@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0",
+  "project": "PegiNelab OS — Ирина Байкал 1.0",
+  "profile_id": "acer-swift3-sf314-41-owner-2026-10-29",
+  "manufacturer": "Acer",
+  "model": "Swift 3 SF314-41",
+  "captured_from": "owner supplied Windows 11 About and Device Manager screenshots plus PowerShell text",
+  "host_os": {
+    "name": "Windows 11 Pro",
+    "version": "26H2",
+    "build": "26300.9711",
+    "architecture": "x64"
+  },
+  "cpu": {
+    "vendor": "AMD",
+    "model": "Ryzen 5 3500U with Radeon Vega Mobile Gfx",
+    "cores": 4,
+    "threads": 8,
+    "windows_reported_base_ghz": 2.1,
+    "architecture": "x86_64"
+  },
+  "ram": {
+    "installed_gib": 20,
+    "windows_reported_available_gib": 17.9
+  },
+  "graphics": {
+    "model": "AMD Radeon Vega 8",
+    "windows_reported_graphics_memory_gib": 2,
+    "linux_driver_candidate": "amdgpu",
+    "verified_on_linux": false
+  },
+  "wifi": {
+    "model": "Qualcomm Atheros QCA61x4A Wireless Network Adapter",
+    "linux_driver_candidate": "ath10k_pci",
+    "firmware_family_candidate": "QCA6174 ath10k",
+    "pci_id": null,
+    "verified_on_linux": false
+  },
+  "audio": {
+    "internal": "Realtek(R) Audio",
+    "hdmi": "AMD High Definition Audio Device",
+    "linux_driver_candidate": "snd_hda_intel",
+    "verified_on_linux": false
+  },
+  "camera": {
+    "windows_label": "HD WebCam",
+    "linux_driver_candidate": "uvcvideo",
+    "usb_id": null,
+    "verified_on_linux": false
+  },
+  "usb": {
+    "controller": "AMD USB 3.10 (Microsoft Windows device manager)",
+    "external_ssd_interface_goal": "USB 3.0",
+    "verified_on_linux": false
+  },
+  "bluetooth": {
+    "present": true,
+    "chipset_unknown": true
+  },
+  "input": {
+    "windows_pen_input_reported_supported": true,
+    "linux_pen_and_touch_verified": false
+  },
+  "storage": {
+    "internal": {
+      "form_factor": "M.2",
+      "owner_reported_nominal_capacity_gb": 512,
+      "role": "windows-host-protected",
+      "never_flash": true
+    },
+    "windows_storage_summary": {
+      "used_gb": 219,
+      "total_gb": 589,
+      "warning": "Windows storage summary does not necessarily identify the physical internal disk"
+    },
+    "external_target": {
+      "form_factor": "M.2",
+      "owner_reported_nominal_capacity_gb": 256,
+      "connection": "USB 3.0",
+      "role": "irina-baikal-boot-target",
+      "identified_by_windows_get_disk": false
+    }
+  },
+  "windows_dev_tools": {
+    "uv": "0.11.15",
+    "python_versions": [
+      "3.14.4",
+      "3.13.13",
+      "3.12.9"
+    ],
+    "preferred_python_for_ui": "3.13.13",
+    "reinstall_needed": false
+  },
+  "linux_base": "Ubuntu 24.04 LTS",
+  "status": {
+    "bootable_image_built": false,
+    "acer_boot_tested": false,
+    "secure_boot_verified": false
+  },
+  "privacy": "No Windows device/product IDs, serial numbers, network secrets or identifiers are stored"
+}
