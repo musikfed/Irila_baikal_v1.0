@@ -98,11 +98,22 @@ class TestReadOnlyPipeline(unittest.TestCase):
         self.assertIn("sbverify --list \"$SHIM\" | grep -Eq 'signature 2'", secure)
         self.assertNotIn("grub-mkstandalone -O x86_64-efi", secure)
         self.assertIn('grub-mkstandalone -O x86_64-efi', original)
-        self.assertIn('irina_baikal_1.0_secureboot.img', workflow)
-        self.assertIn('irina-baikal-1.0-secureboot-img', workflow)
+        # R2 is deliberately a separate file/artifact; do not overwrite
+        # the earlier unsigned or signed experimental images.
+        self.assertIn('irina_baikal_1.0_r2_secureboot.img', workflow)
+        self.assertIn('irina-baikal-1.0-secureboot-r2-img', workflow)
+        self.assertNotIn('irina_baikal_1.0_secureboot.img', workflow)
+        # Acer verified the signed chain reaches Linux. The original image
+        # then panicked because -e omitted /dev /proc /sys /run /tmp, etc.
+        self.assertNotIn('-one-file-system -e dev proc sys run tmp mnt media', secure)
+        self.assertIn('for required_dir in dev proc sys run tmp mnt media', secure)
+        self.assertIn('chmod 1777 "$STAGE/tmp"', secure)
+        self.assertIn('unsquashfs -ll "$TMP/filesystem.squashfs"', secure)
+        self.assertIn('grep -Fqx "squashfs-root/$required_dir"', secure)
+        self.assertIn('live-media=/dev/disk/by-label/IRINA_LIVE', secure)
         self.assertNotIn('irina-baikal-1.0-readonly-img', workflow)
         self.assertIn("retention-days: 30", workflow)
-        self.assertIn('sha256sum -c irina_baikal_1.0_secureboot.img.sha256', workflow)
+        self.assertIn('sha256sum -c irina_baikal_1.0_r2_secureboot.img.sha256', workflow)
         self.assertIn("apt-get download shim-signed grub-efi-amd64-signed", workflow)
 
     def test_copy_refuses_existing_artifacts(self):
