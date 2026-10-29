@@ -138,7 +138,16 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     if not WEB_ROOT.is_dir():
         raise SystemExit(f"Web UI folder not found: {WEB_ROOT}")
-    with ThreadingHTTPServer(("127.0.0.1", 0), Handler) as server:
+    # Stable loopback port preserves browser localStorage between launches.
+    # Port 0 is no longer used by default because storage is scoped to origin.
+    port = int(os.environ.get("IRINA_PORT", "8765"))
+    if not 1024 <= port <= 65535:
+        raise SystemExit("IRINA_PORT must be between 1024 and 65535")
+    try:
+        server_obj = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    except OSError as exc:
+        raise SystemExit(f"Cannot bind to local port {port}: {exc}") from exc
+    with server_obj as server:
         url = f"http://127.0.0.1:{server.server_port}/"
         print("Ирина Байкал · оболочка прототип", url, flush=True)
         print("Нажми Ctrl+C для остановки. Не закрывай это окно во время работы интерфейса.", flush=True)
