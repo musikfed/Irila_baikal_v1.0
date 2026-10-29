@@ -25,7 +25,7 @@ cleanup() {
   trap - EXIT
   set +e
   if [[ -n "$MNT" ]]; then
-    for sub in /run /sys /proc /dev /home /boot/efi ""; do
+    for sub in /run /sys /proc /dev /var/tmp/irina-data /boot/efi ""; do
       mountpoint -q "$MNT$sub" && umount -R "$MNT$sub"
     done
     rmdir "$MNT" 2>/dev/null
@@ -101,6 +101,7 @@ POLICY
 chmod 755 "$MNT/usr/sbin/policy-rc.d"
 for mountname in dev proc sys run; do
   mount --rbind "/$mountname" "$MNT/$mountname"
+  mount --make-rslave "$MNT/$mountname"
   mount --make-rslave "$MNT/$mountname"
 done
 export DEBIAN_FRONTEND=noninteractive
@@ -190,8 +191,12 @@ KERNEL="$(find "$MNT/boot" -maxdepth 1 -name 'vmlinuz-*' -type f | sort -V | tai
 [[ -n "$KERNEL" ]] || die "Kernel was not installed"
 VER="$(basename "$KERNEL" | sed 's/^vmlinuz-//')"
 [[ -s "$MNT/boot/initrd.img-$VER" ]] || die "Missing initramfs"
-mount "$P3" "$MNT/home"
-chroot "$MNT" chown -R irina:irina /home/irina
+# Copy the initial home directory into the persistent DATA filesystem.
+# Do not mount DATA directly over /home until copying is complete.
+mkdir -p "$MNT/var/tmp/irina-data"
+mount "$P3" "$MNT/var/tmp/irina-data"
+rsync -aH "$MNT/home/" "$MNT/var/tmp/irina-data/"
+chroot "$MNT" chown -R irina:irina /var/tmp/irina-data/irina
 chroot "$MNT" apt-get clean
 rm -f "$MNT/usr/sbin/policy-rc.d"
 mkdir -p "$MNT/boot/grub"
