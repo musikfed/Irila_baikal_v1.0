@@ -1,5 +1,9 @@
 # Запуск сборки IMG через установленную Ubuntu WSL2 в Windows 11 Pro
 
+**Исправленный запуск v2.1 (ошибка `bash -lc conditional binary operator expected`):** использовать новый файл [windows/Build-IrinaViaWSL-v2.ps1](windows/Build-IrinaViaWSL-v2.ps1), сначала с параметром `-CheckOnly` для безопасной проверки, затем без него. Это обходит кеширование старой версии `Build-IrinaViaWSL.ps1`. [Пошаговые команды](docs/BUILD_WSL_F_DRIVE.md#исправление-ошибки-ubuntu--c-line-3-conditional-binary-operator-expected).
+
+
+
 **Основной локальный маршрут:** [windows/Build-IrinaViaWSL.ps1](windows/Build-IrinaViaWSL.ps1) — Windows PowerShell-команда для сборки файла `irina_baikal_1.0.img` внутри WSL2 Ubuntu 24.04 с копированием на `F:\irinabaikal`. Скрипт проверяет Linux ext4, свободное место и то, что F: не похож на целевой внешний SSD 256 ГБ. Физические диски не форматирует.
 
 Из PowerShell в корне клонированного репозитория:
