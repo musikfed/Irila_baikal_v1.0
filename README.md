@@ -1,5 +1,17 @@
 # PegiNelab OS — «Ирина Байкал 1.0»
 
+## Новый путь: установленная ОС на USB M.2 — Windows-first (Secure Boot)
+
+**Решение архитектора:** все операции создания GPT/FAT32 EFI/ext4 выполняются на GitHub CI внутри готового IMG, Windows используется только как графическая управляющая среда. Без Casper, LiveCD, ручной разметки, diskpart и Linux CLI. Установленная ОС сохраняет данные; на первом запуске защищённая служба расширяет собственный ext4 на внешнем USB SSD 256GB, а после Wi-Fi автоматически устанавливает LibreOffice, GIMP, Inkscape и Thunderbird с графическим статусом.
+
+- [**Главная инструкция Windows-first установленной версии**](docs/INSTALLED_USB_WINDOWS_FIRST.md)
+- [**Независимый GitHub Actions: Build Installed USB Secure Boot**](.github/workflows/build-installed-secureboot-img.yml)
+- [**Windows GUI помощник (проверка SHA и USB, открывает Rufus)**](windows/Irina-USB-Assistant.ps1)
+
+**Три прошлых IMG не удалены**: исходный `irina_baikal_1.0.img`, Live Secure Boot и Live Secure Boot R2. Новый файл называется `irina_baikal_1.0_installed_secureboot.img`. Только Rufus вручную подтверждает стирание внешнего SSD. Внутренние Windows диски, Secure Boot и BitLocker не менять. **Новая система пока не прошла аппаратную загрузку на Acer.**
+
+---
+
 ## Второй образ для Secure Boot (первый сохраняется)
 
 Для Acer с Secure Boot **Enabled** есть отдельный экспериментальный вариант **`irina_baikal_1.0_secureboot.img`**: Microsoft-подписанный Ubuntu shim → Canonical-подписанный GRUB → подписанное ядро Ubuntu. **Старый `irina_baikal_1.0.img` и прежний сборщик остаются нетронутыми.** Для двух образов — разные GitHub Actions и разные артефакты. Приватные ключи и приватный репозиторий **не нужны**.
