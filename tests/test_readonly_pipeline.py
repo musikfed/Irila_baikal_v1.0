@@ -38,7 +38,9 @@ class TestReadOnlyPipeline(unittest.TestCase):
                     body = match.group(1).replace("__PROFILE__", "core").replace("__MAX__", "5120")
                     subprocess.run(["bash", "-n"], input=body, text=True, check=True)
         latest = (REPO / "windows" / "Build-IrinaViaWSL-v2.ps1").read_text("utf-8")
-        self.assertIn("IRINA WSL BUILDER v2.2", latest)
+        self.assertIn("IRINA WSL BUILDER v2.3", latest)
+        self.assertIn("--exec /bin/bash $linuxFile | Out-Host", latest)
+        self.assertIn("$exitCode = [int]$LASTEXITCODE", latest)
         self.assertIn("CHECK-ONLY PASS", latest)
         self.assertIn("udev mount grub-efi-amd64-bin", latest)
 
