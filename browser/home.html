@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ирина Байкал — главная</title>
+<style>
+:root{color-scheme:dark;font-family:Segoe UI,Arial,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#061f2f;color:#effffa;overflow-x:hidden}
+.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:-1}
+.shade{position:fixed;inset:0;background:linear-gradient(145deg,#031b2add 0%,#061e34aa 38%,#033f45bb 100%);z-index:-1}
+main{margin:auto;max-width:960px;padding:9vh 38px 50px}
+.kicker{color:#9adfcd;font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase}
+h1{font-weight:730;font-size:clamp(44px,7vw,76px);line-height:1.05;margin:22px 0}
+h1 span{color:#87ebce}p{max-width:640px;line-height:1.7;color:#c0dfe2;font-size:18px}
+.search{display:flex;align-items:center;gap:10px;margin-top:35px;background:#092b3bde;border:1px solid #4ca9aa;border-radius:18px;padding:10px;box-shadow:0 18px 55px #021722aa}
+input{background:transparent;color:#fff;border:0;outline:0;font-size:17px;flex:1;min-width:0;padding:13px}
+button{border:0;border-radius:12px;padding:14px 24px;background:linear-gradient(110deg,#19a78c,#167da4);font-weight:700;color:white;cursor:pointer}
+button:hover{filter:brightness(1.12)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:35px}
+a.card{display:block;text-decoration:none;background:#0a3848c9;color:#eafffa;border:1px solid #2a7884;border-radius:18px;padding:22px;min-height:150px;transition:transform .15s}
+a.card:hover{transform:translateY(-3px);background:#10566a}
+.card strong{display:block;margin:12px 0 4px;font-size:17px}.card small{color:#aad3d1;line-height:1.5}
+footer{padding:28px 0;color:#8cb9ba;font-size:13px}
+@media(max-width:680px){.cards{grid-template-columns:1fr}main{padding:30px 18px}.search{flex-direction:column}button{width:100%}}
+</style></head>
+<body>
+<svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#0b5469"/><stop offset="1" stop-color="#153e62"/></linearGradient><linearGradient id="water" x2="0" y2="1"><stop stop-color="#077b8b"/><stop offset="1" stop-color="#04374f"/></linearGradient></defs>
+<rect width="1600" height="900" fill="url(#sky)"/><circle cx="1220" cy="180" r="99" fill="#b1eadc" opacity=".35"/>
+<path d="M0 470L145 330 320 450 545 230 790 467 950 280 1160 443 1330 245 1600 442V900H0Z" fill="#13445d"/>
+<path d="M0 540L188 410 390 505 635 350 847 526 1050 395 1212 533 1395 350 1600 490V900H0Z" fill="#0c6572"/>
+<path d="M0 575Q380 555 800 577T1600 580V900H0Z" fill="url(#water)"/>
+<path d="M0 675Q350 646 700 675T1600 650" fill="none" stroke="#7ddac8" stroke-opacity=".20" stroke-width="5"/>
+<path d="M0 760Q450 722 880 752T1600 733" fill="none" stroke="#b3f2df" stroke-opacity=".15" stroke-width="4"/></svg>
+<div class="shade"></div>
+<main><div class="kicker">PegiNelab OS · Ирина Байкал 1.0</div>
+<h1>Добро пожаловать<br>на <span>Байкал</span></h1>
+<p>Твой интернет, твои вкладки, твой стиль. Сине-зелёный браузер будущей операционной системы «Ирина Байкал».</p>
+<form class="search" id="find"><input id="q" autofocus placeholder="Найти в интернете или ввести адрес" aria-label="Поиск"><button type="submit">Найти ↗</button></form>
+<div class="cards">
+<a class="card" href="https://www.wikipedia.org/"><span>◈</span><strong>Знания</strong><small>Википедия — статьи и справка</small></a>
+<a class="card" href="https://meet.jit.si/"><span>◉</span><strong>Видеосвязь</strong><small>Jitsi Meet — видеовстречи с разрешениями на камеру</small></a>
+<a class="card" href="http://127.0.0.1:11434/"><span>✧</span><strong>Локальный ИИ</strong><small>Статус Ollama на этом компьютере</small></a>
+</div>
+<footer>Irina Browser · Прототип v0.4 · Камера и микрофон включаются только после разрешения</footer>
+</main>
+<script>
+document.getElementById("find").addEventListener("submit",e=>{
+e.preventDefault();let s=document.getElementById("q").value.trim();if(!s)return;
+if(/^https?:\/\/\S+$/i.test(s))location.assign(s);
+else if(/^(?:localhost|[a-z0-9.-]+\.[a-z]{2,})(?::\d+)?(?:\/\S*)?$/i.test(s))location.assign((s.startsWith('localhost')?'http':'https')+'://'+s);
+else location.assign('https://duckduckgo.com/?q='+encodeURIComponent(s));
+});
+</script></body></html>
