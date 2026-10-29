@@ -8,6 +8,9 @@ AI requests are proxied to a local Ollama daemon (optional).
 import json
 import os
 import pathlib
+import shutil
+import subprocess
+import sys
 import urllib.error
 import urllib.request
 import webbrowser
@@ -16,6 +19,24 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 WEB_ROOT = pathlib.Path(__file__).resolve().parent / "web"
 OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
 MODEL = os.environ.get("IRINA_MODEL", "qwen3:1.7b")
+
+# Explicit allowlist. No shell command or user-provided arguments are accepted.
+# Launchers work ONLY in an interactive, unprivileged Linux desktop session.
+APP_COMMANDS = {
+    "writer": ("libreoffice", "--writer"),
+    "calc": ("libreoffice", "--calc"),
+    "impress": ("libreoffice", "--impress"),
+    "draw": ("libreoffice", "--draw"),
+    "base": ("libreoffice", "--base"),
+    "gimp": ("gimp",),
+    "inkscape": ("inkscape",),
+    "mail": ("thunderbird",),
+    "sip": ("linphone",),
+    "solitaire": ("sol", "aisleriot"),
+    "mines": ("gnome-mines",),
+    "mahjongg": ("gnome-mahjongg",),
+}
+
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -38,7 +59,53 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(payload)
 
+    def _launch(self):
+        # This endpoint must not accept browser cross-site form posts.
+        host = self.headers.get("Host", "")
+        permitted = {
+            f"127.0.0.1:{self.server.server_port}",
+            f"localhost:{self.server.server_port}",
+        }
+        origin = self.headers.get("Origin", "")
+        if host not in permitted or origin != "http://" + host:
+            return self._json(403, {"error": "Same-origin local UI required"})
+        if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
+            return self._json(415, {"error": "JSON request required"})
+        if sys.platform != "linux" or os.geteuid() == 0:
+            return self._json(409, {"error": "Native programs launch only from an unprivileged Linux desktop session"})
+        try:
+            size = int(self.headers.get("Content-Length", "0"))
+            if not 0 < size < 256:
+                return self._json(413, {"error": "Invalid request size"})
+            value = json.loads(self.rfile.read(size))
+            app = value.get("app") if isinstance(value, dict) else None
+            if not isinstance(app, str) or app not in APP_COMMANDS:
+                return self._json(400, {"error": "Unknown application"})
+            cmd = APP_COMMANDS[app]
+            # Ubuntu's classic solitaire executable is often 'sol'.
+            binary = shutil.which(cmd[0])
+            command = cmd
+            if app == "solitaire" and not binary:
+                binary = shutil.which("aisleriot")
+                command = ("aisleriot",)
+            if not binary:
+                return self._json(404, {"error": "Application is not installed in Linux"})
+            subprocess.Popen(
+                [binary, *command[1:]],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+            return self._json(200, {"launched": app})
+        except (ValueError, TypeError, json.JSONDecodeError):
+            return self._json(400, {"error": "Invalid JSON"})
+        except OSError:
+            return self._json(502, {"error": "Could not start the application"})
+
     def do_POST(self):
+        if self.path == "/api/launch":
+            return self._launch()
         if self.path != "/api/ai":
             return self._json(404, {"error": "Unknown endpoint"})
         # Bind to loopback and reject requests from untrusted websites.
