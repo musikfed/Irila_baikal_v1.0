@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-REM IRINA GUI single-file launcher v4. Offline. No admin. No download/update/write.
+REM IRINA GUI single-file launcher v5. Offline. No admin. No download/update/write.
 REM Windows 11: double click. Powershell gets UTF-8 code from this SAME file.
 set "IRINA_LAUNCHER=%~f0"
 set "IRINA_MODE=%~1"
@@ -19,8 +19,33 @@ param([switch]$SelfTest)
 
 # ALL GUI code is packaged in this CMD file; it is explicitly decoded as
 # UTF-8 by Windows PowerShell 5.1, regardless of the active console codepage.
+# MSFT_Disk.BusType is the supported Windows storage transport identifier.
+# For UASP enclosures Win32_DiskDrive.InterfaceType may say 'SCSI' although
+# Get-Disk reports USB. NEVER use Win32_DiskDrive.InterfaceType for this gate.
+function Find-IrinaUsbDisks {
+    param([object[]]$AllDisks)
+    @($AllDisks | Where-Object {
+        ([string]$_.BusType -ieq 'USB') -and
+        ([string]$_.FriendlyName -match '(?i)(RTL9210B|Realtek)') -and
+        ([double]$_.Size -ge 230000000000) -and
+        ([double]$_.Size -le 275000000000) -and
+        (-not [bool]$_.IsBoot) -and
+        (-not [bool]$_.IsSystem)
+    })
+}
+
 if ($SelfTest) {
-    Write-Host 'IRINA GUI v4: UTF8/Powershell 5.1 self-test passed'
+    $mock = @(
+      [pscustomobject]@{Number=2; FriendlyName='Realtek RTL9210B-CG'; BusType='USB'; InterfaceType='SCSI'; Size=256000000000; IsBoot=$false; IsSystem=$false},
+      [pscustomobject]@{Number=1; FriendlyName='HFM512GDJTNG-8310A'; BusType='NVMe'; Size=512000000000; IsBoot=$true; IsSystem=$true},
+      [pscustomobject]@{Number=0; FriendlyName='AMD R5SL120G'; BusType='SATA'; Size=120000000000; IsBoot=$false; IsSystem=$false},
+      [pscustomobject]@{Number=3; FriendlyName='Realtek RTL9210B-CG'; BusType='SCSI'; InterfaceType='SCSI'; Size=256000000000; IsBoot=$false; IsSystem=$false}
+    )
+    $found = @(Find-IrinaUsbDisks -AllDisks $mock)
+    if ($found.Count -ne 1 -or $found[0].Number -ne 2) {
+        throw 'IRINA USB v5 selector regression: must accept USB/UASP Realtek, never internal disks'
+    }
+    Write-Host 'IRINA GUI v5: PS5.1 and Realtek USB/UASP selection self-test passed'
     return
 }
 
@@ -110,39 +135,23 @@ $check.Add_Click({
             throw 'Контрольная сумма не совпала. Запись образа запрещена.'
         }
 
-        # Win32_DiskDrive is readable by a standard Windows user. We never
-        # issue any disk-write commands, reformat volumes or initialize disks.
-        $disks = @(
-            Get-CimInstance -ClassName Win32_DiskDrive -ErrorAction Stop |
-                Where-Object {
-                    $_.InterfaceType -eq 'USB' -and
-                    $_.Model -like '*RTL9210B-CG*' -and
-                    [double]$_.Size -ge 230000000000 -and
-                    [double]$_.Size -le 275000000000
-                }
-        )
+        # Get-Disk on Windows 11 reports the actual USB storage BusType,
+        # including USB M.2 UASP adapters presenting 'SCSI' via legacy WMI.
+        # This helper only READS disk metadata and never modifies partitions.
+        $allDisks = @(Get-Disk -ErrorAction Stop)
+        $disks = @(Find-IrinaUsbDisks -AllDisks $allDisks)
         if ($disks.Count -ne 1) {
-            throw "Не найден ровно один внешний Realtek RTL9210B-CG 256 ГБ. Найдено: $($disks.Count)."
+            $seen = @($allDisks | ForEach-Object {
+                "No.$($_.Number): $($_.FriendlyName); $($_.BusType); $([math]::Round([double]$_.Size / 1GB, 2)) GiB"
+            })
+            $detail = $seen -join ' | '
+            throw "Ожидался один внешний USB Realtek 256 ГБ; найдено: $($disks.Count). Windows видит: $detail"
         }
         $disk = $disks[0]
-        if (Get-Command Get-Disk -ErrorAction SilentlyContinue) {
-            try {
-                $info = Get-Disk -Number $disk.Index -ErrorAction Stop
-                if ($info.IsBoot -or $info.IsSystem -or $info.BusType -ne 'USB') {
-                    throw 'Это системный или не-USB диск; запись не разрешается.'
-                }
-            } catch [Microsoft.PowerShell.Commands.WriteErrorException] {
-                throw
-            } catch {
-                # WMI identification is sufficient for a read-only helper;
-                # Rufus still requires explicit device selection/confirmation.
-                if ($_.Exception.Message -like '*системный*') { throw }
-            }
-        }
         $output.Lines = @(
             'SHA-256: OK. Образ целый.',
-            "USB SSD: Disk $($disk.Index); $($disk.Model)",
-            "Размер: $([math]::Round([double]$disk.Size / 1GB, 2)) GiB; интерфейс USB.",
+            "USB SSD: Disk $($disk.Number); $($disk.FriendlyName)",
+            "Размер: $([math]::Round([double]$disk.Size / 1GB, 2)) GiB; BusType: $($disk.BusType).",
             "Файл: $image",
             '',
             'Это НЕ запись. Проверьте модель SSD ещё раз в Rufus перед START.'
