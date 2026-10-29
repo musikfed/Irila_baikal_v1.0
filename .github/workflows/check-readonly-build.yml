@@ -9,6 +9,7 @@ on:
       - 'scripts/build_in_wsl.sh'
       - 'windows/Prepare-IrinaBuilderOnF.ps1'
       - 'windows/Build-IrinaViaWSL.ps1'
+      - 'windows/Diagnose-IrinaWSL.ps1'
       - 'ai/hrag.py'
       - '.github/workflows/check-readonly-build.yml'
   pull_request:
@@ -43,7 +44,7 @@ jobs:
         run: |
           $tokens = $null
           $errors = $null
-          foreach ($file in @('windows/Prepare-IrinaBuilderOnF.ps1', 'windows/Build-IrinaViaWSL.ps1')) {
+          foreach ($file in @('windows/Prepare-IrinaBuilderOnF.ps1', 'windows/Build-IrinaViaWSL.ps1', 'windows/Diagnose-IrinaWSL.ps1')) {
             $tokens = $null
             $errors = $null
             [System.Management.Automation.Language.Parser]::ParseFile(
