@@ -1,6 +1,6 @@
 # «Ирина Байкал 1.0» — сборка IMG через существующую Ubuntu WSL2 на Windows 11
 
-**Актуальная инструкция для Acer Swift 3 SF314-41, 29.10.2026.** Старая команда с windows/Build-IrinaViaWSL.ps1 выдавала ошибку «Ubuntu: -c: line 3: conditional binary operator expected»: Windows PowerShell некорректно передавал Bash-условия через bash -lc. **Использовать только новый [Build-IrinaViaWSL-v2.ps1](../windows/Build-IrinaViaWSL-v2.ps1), v2.1.** В нём команды исполняются из временного UTF-8 LF-файла по пути /mnt/f, без ошибок кавычек.
+**Актуальная инструкция для Acer Swift 3 SF314-41, 29.10.2026.** Старая команда с windows/Build-IrinaViaWSL.ps1 выдавала ошибку «Ubuntu: -c: line 3: conditional binary operator expected»: Windows PowerShell некорректно передавал Bash-условия через bash -lc. **Использовать только новый [Build-IrinaViaWSL-v2.ps1](../windows/Build-IrinaViaWSL-v2.ps1), v2.2.** В нём команды исполняются из временного UTF-8 LF-файла по пути /mnt/f, без ошибок кавычек.
 
 ## Что уже проверено
 
@@ -12,17 +12,23 @@
 
 **Примечание о месте:** Ubuntu WSL показывает ~940 ГБ доступного пространства внутри виртуального ext4, но это *не* означает столько же свободного физического места на D:. Промежуточные файлы сборки находятся в /srv/irina в существующей WSL; готовые IMG и SHA256 копируются на F:. Убедитесь, что на реальном диске с WSL достаточно места.
 
-## 1. Скачать актуальную v2.1 в PowerShell Windows
+## Нужен ли PowerShell «Запуск от имени администратора»?
+
+**Нет. Запускайте обычный PowerShell под тем же пользователем Windows, у которого зарегистрирована Ubuntu-24.04.** Команда `wsl.exe --user root` даст необходимые root-права **внутри Linux**. Windows-администратор нужен для установки/включения компонентов Windows, но WSL2 уже установлен, и существующая Ubuntu успешно запускается. Из `C:\WINDOWS\system32` команды тоже работают, потому что сценарий использует абсолютные пути F:.
+
+**Аудит кода:** [тесты контрольной суммы и Bash-команд](../tests/test_readonly_pipeline.py) проверяют сохранение кавычек WSL, синтаксис скриптов, относительные пути SHA256, корректную проверку *копии* на F: и отказ при её повреждении. **Скрипт полной сборки образа на Acer ещё не выполнялся.** Проверка `-CheckOnly` гарантирует лишь базовые условия: она не проверяет совместимость реального WSL с loop/GPT, все пакеты или загрузку с SSD.
+
+## 1. Скачать актуальную v2.2 в PowerShell Windows
 
 Эти команды можно выполнять из PS C:\WINDOWS\system32:
 
 ~~~powershell
 Invoke-WebRequest "https://raw.githubusercontent.com/musikfed/Irila_baikal_v1.0/main/windows/Build-IrinaViaWSL-v2.ps1" -OutFile "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1"
-Select-String -Path "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Pattern "IRINA WSL BUILDER v2.1", "--exec /bin/bash"
+Select-String -Path "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1" -Pattern "IRINA WSL BUILDER v2.2", "--exec /bin/bash"
 Get-Content "F:\irinabaikal\Build-IrinaViaWSL-v2.ps1"
 ~~~
 
-Проверьте содержимое до исполнения. Если строка **IRINA WSL BUILDER v2.1** не найдена, остановитесь. Имя **v2** должно присутствовать *и при скачивании, и при запуске*. Старый файл на F: можно оставить, но его больше не запускать.
+Проверьте содержимое до исполнения. Если строка **IRINA WSL BUILDER v2.2** не найдена, остановитесь. Имя **v2** должно присутствовать *и при скачивании, и при запуске*. Старый файл на F: можно оставить, но его больше не запускать.
 
 ## 2. Запустить проверку WSL без установки пакетов
 
@@ -33,9 +39,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "F:\irinabaikal\Build-Ir
 Ожидаемый вывод:
 
 ~~~text
-IRINA WSL BUILDER v2.1 (file-based Bash runner, 2026-10-29)
+IRINA WSL BUILDER v2.2 (file-based Bash runner, 2026-10-29)
 PASS: Ubuntu 24.04 + WSL2 + Linux ext4 staging + F: output
 CHECK-ONLY PASS. No packages were installed and no IMG was created.
+NOTE: This does NOT verify loop/GPT capability, installed packages, full image build or Acer boot.
 ~~~
 
 Параметр -CheckOnly **не выполняет apt, не создаёт rootfs или IMG и не изменяет физические диски**. Он проверяет версии WSL/Ubuntu, Linux ext4 для промежуточных файлов и доступность F:. Полный тест loop/GPT выполняется уже на следующем этапе только во временном файле.
