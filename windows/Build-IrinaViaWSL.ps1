@@ -29,6 +29,28 @@ $distros=@(& wsl.exe --list --quiet | ForEach-Object { ($_ -replace [char]0,"").
 if ($LASTEXITCODE -ne 0 -or $distros -notcontains $Distro) {
   Fail "WSL distro '$Distro' missing. Run wsl -l -v. For all files on F: first run Prepare-IrinaBuilderOnF.ps1"
 }
+# Windows PowerShell 5.1 -> wsl.exe -> bash -lc can strip Bash quotes and corrupt
+# multi-line conditionals. Instead write a short, LF-only, UTF-8 (no BOM) script
+# in the dedicated F: project folder and pass only its path to /bin/bash.
+# Temporary scripts contain no secrets and are always removed.
+function Invoke-IrinaWSLScript([string]$ScriptText, [string]$Phase) {
+  $name = ".irina-wsl-$([Guid]::NewGuid().ToString('N')).sh"
+  $winFile = Join-Path $folder $name
+  $linuxFile = "/mnt/f/irinabaikal/$name"
+  try {
+    $utf8 = [System.Text.UTF8Encoding]::new($false)
+    $textLF = ($ScriptText -replace "`r`n", "`n") + "`n"
+    [System.IO.File]::WriteAllText($winFile, $textLF, $utf8)
+    Write-Host "IRINA WSL: $Phase" -ForegroundColor Cyan
+    & wsl.exe --distribution $Distro --user root --exec /bin/bash $linuxFile
+    return [int]$LASTEXITCODE
+  }
+  finally {
+    if (Test-Path -LiteralPath $winFile) {
+      Remove-Item -LiteralPath $winFile -Force
+    }
+  }
+}
 $preflight=@'
 set -Eeuo pipefail
 . /etc/os-release
@@ -38,8 +60,8 @@ grep -qi microsoft /proc/sys/kernel/osrelease || { echo "Need WSL2" >&2; exit 2;
 [[ -d /mnt/f/irinabaikal ]] || { echo "Windows F: folder unavailable in WSL" >&2; exit 2; }
 echo "PASS: Ubuntu 24.04 + WSL2 + Linux ext4 staging + F: output"
 '@
-& wsl.exe --distribution $Distro --user root -- bash -lc $preflight
-if ($LASTEXITCODE -ne 0) { Fail "WSL preflight failed; no build started" }
+$preflightStatus = Invoke-IrinaWSLScript -ScriptText $preflight -Phase "Checking Ubuntu 24.04, WSL2 and F: mount"
+if ($preflightStatus -ne 0) { Fail "WSL preflight failed (code $preflightStatus); no build started" }
 Write-Host "Distro: $Distro; profile: $Profile; max IMG: $MaxImageMiB MiB" -ForegroundColor Cyan
 Write-Host "F: disk: $($disk.FriendlyName); Windows and physical SSDs will NOT be partitioned" -ForegroundColor Yellow
 $answer=Read-Host "Type BUILD-IRINA to install Linux build packages and create the IMG file"
@@ -61,8 +83,8 @@ cd Irila_baikal_v1.0
 bash scripts/build_in_wsl.sh --__PROFILE__ --max-image-mib __MAX__
 '@
 $commands=$commands.Replace("__PROFILE__",$Profile).Replace("__MAX__",[string]$MaxImageMiB)
-& wsl.exe --distribution $Distro --user root -- bash -lc $commands
-if ($LASTEXITCODE -ne 0) { Fail "Build failed: do not flash SSD. Review WSL logs." }
+$buildStatus = Invoke-IrinaWSLScript -ScriptText $commands -Phase "Building IMG inside Linux WSL2 ext4"
+if ($buildStatus -ne 0) { Fail "Build failed (code $buildStatus): do not flash SSD. Review WSL logs." }
 if (-not (Test-Path -LiteralPath $img -PathType Leaf) -or -not (Test-Path -LiteralPath $checksum -PathType Leaf)) {
   Fail "IMG and SHA256 not found on F: despite successful build command"
 }
