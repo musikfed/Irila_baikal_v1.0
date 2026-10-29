@@ -43,5 +43,14 @@ jobs:
           git add ui/web/assets/irina_intro.mp3
           if ! git diff --cached --quiet; then
             git commit -m "assets: publish generated Irina Baikal startup audio"
-            git push
+            for attempt in 1 2 3; do
+              git fetch --quiet origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+              sleep 2
+            done
+            echo 'Could not fast-forward audio asset onto main' >&2
+            exit 1
           fi
