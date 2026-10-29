@@ -75,6 +75,7 @@
     <button type="button" class="quick-action" data-app="camera">◉ Круглая камера</button>
     <button type="button" class="quick-action" data-cmd="camera-visibility">◉ Показать / скрыть круг</button>
     <button type="button" class="quick-action" data-app="settings">⚙ Все параметры</button>
+    <button id="intro-preview" type="button" class="quick-action">♪ Звук старта</button>
   </aside>
 
   <aside id="camera-bubble" class="camera-bubble" hidden aria-label="Круглое окно селфи">
@@ -101,6 +102,7 @@
     <span class="dock-divider" aria-hidden="true"></span>
     <button type="button" class="dock-app" data-app="settings" title="Параметры">⚙</button>
   </footer>
+  <audio id="startup-intro" preload="none" src="assets/irina_intro.mp3"></audio>
   <div id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
