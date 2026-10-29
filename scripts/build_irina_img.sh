@@ -181,6 +181,7 @@ INTROENTRY
 fi
 mkdir -p "$MNT/etc/NetworkManager/conf.d"
 chroot "$MNT" systemctl enable NetworkManager.service lightdm.service
+chroot "$MNT" systemctl set-default graphical.target
 cat > "$MNT/etc/fstab" <<'FSTAB'
 LABEL=IRINA_ROOT / ext4 defaults,noatime,errors=remount-ro 0 1
 LABEL=IRINA_EFI /boot/efi vfat umask=0077 0 2
