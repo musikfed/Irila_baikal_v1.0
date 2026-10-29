@@ -47,6 +47,12 @@ done
 [[ -d "$STAGE/etc" && -d "$STAGE/usr" && -d "$STAGE/opt/irina/ui" ]] || die 'Stage not prepared by prepare_source.sh'
 [[ ! -d "$STAGE/casper" ]] || die 'Rootfs stage unexpectedly has casper source dir'
 findmnt -R -n "$STAGE" | grep -q . && die 'Stage has mounted filesystems; unmount chroot bind mounts first'
+# Reinstate empty Linux mountpoint directories in the isolated stage before
+# packing; no host system mountpoints or partitions are touched.
+for required_dir in dev proc sys run tmp mnt media; do
+  mkdir -p "$STAGE/$required_dir"
+done
+chmod 1777 "$STAGE/tmp"
 VER="$(find "$STAGE/boot" -maxdepth 1 -name 'vmlinuz-*' -printf '%f\n' | sed 's/vmlinuz-//' | sort -V | tail -1)"
 [[ -n "$VER" && -s "$STAGE/boot/vmlinuz-$VER" && -s "$STAGE/boot/initrd.img-$VER" ]] || die 'Linux kernel/casper initrd missing'
 SHIM="$SIGNED_ASSETS/usr/lib/shim/shimx64.efi.dualsigned"
