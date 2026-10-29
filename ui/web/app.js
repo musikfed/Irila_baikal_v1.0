@@ -48,6 +48,7 @@
       '<button type="button" data-launch="impress">▤ Impress · Презентации</button>',
       '<button type="button" data-launch="draw">▤ Draw · Рисунки и схемы</button>',
       '<button type="button" data-launch="base">▤ Base · Базы данных</button>',
+      '<button type="button" data-launch="math">▤ Math · Формулы</button>',
       '</div><h3>Графика</h3><div class="native-grid">',
       '<button type="button" data-launch="gimp">◫ GIMP · Редактор фото</button>',
       '<button type="button" data-launch="inkscape">◇ Inkscape · Векторная графика</button>',
