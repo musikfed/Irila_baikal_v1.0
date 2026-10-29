@@ -57,6 +57,24 @@ jobs:
             }
             Write-Host "PowerShell syntax OK: $file"
           }
+      - name: Ensure WSL2 launcher avoids corrupted bash -lc quoting
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+          s = Path("windows/Build-IrinaViaWSL.ps1").read_text(encoding="utf-8")
+          assert "--exec /bin/bash $linuxFile" in s, "Must run path-based Bash script"
+          assert "-- bash -lc $preflight" not in s
+          assert "-- bash -lc $commands" not in s
+          assert "[System.IO.File]::WriteAllText" in s
+          for variable in ("preflight", "commands"):
+              found = re.search(r"\$"+variable+r"=@'\n(.*?)\n'@", s, re.S)
+              assert found, f"Missing {variable} here-string"
+              snippet = found.group(1).replace("__PROFILE__", "core").replace("__MAX__", "5120")
+              p = subprocess.run(["bash", "-n"], input=snippet, capture_output=True, text=True)
+              assert p.returncode == 0, f"{variable} bash syntax failure: {p.stderr}"
+          print("WSL PowerShell-to-Bash transfer: verified both embedded scripts")
+          PY
       - name: Refuse building without privileges
         run: |
           ! bash scripts/prepare_source.sh --stage /tmp/irina-do-not-create
