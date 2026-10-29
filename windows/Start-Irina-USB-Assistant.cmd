@@ -9,7 +9,9 @@ if not exist "%IRINA_GUI%" (
   pause
   exit /b 1
 )
-powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $p=$env:IRINA_GUI; $source=[System.IO.File]::ReadAllText($p,[System.Text.Encoding]::UTF8); & ([System.Management.Automation.ScriptBlock]::Create($source))"
+set "IRINA_TEST_MODE="
+if /I "%~1"=="--self-test" set "IRINA_TEST_MODE=-SelfTest"
+powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $p=$env:IRINA_GUI; $source=[System.IO.File]::ReadAllText($p,[System.Text.Encoding]::UTF8); & ([System.Management.Automation.ScriptBlock]::Create($source)) %IRINA_TEST_MODE%"
 if errorlevel 1 (
   echo IRINA GUI failed to start. See error message above.
   pause
