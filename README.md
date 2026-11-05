@@ -243,4 +243,3 @@ uv pip install --python .venv\Scripts\python.exe -r browser\requirements.txt
 
 [**Visual workflow, international descriptions and contacts**](docs/showcase/README.md)
 
-![Irila_baikal_v1.0 workflow](docs/showcase/overview.svg)
