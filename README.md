@@ -237,3 +237,10 @@ uv pip install --python .venv\Scripts\python.exe -r browser\requirements.txt
 - Сборщик **ещё не выполнялся на полноценной Ubuntu VM**, физическая загрузка Acer не подтверждена. В GitHub Actions проверены синтаксис и безопасный отказ без прав, но не получен готовый IMG.
 - Внутренний диск Windows 11 Pro не трогать. Пароль `.img.login.txt` не публиковать. Для отключения Secure Boot перед тестом сначала сохранить Windows BitLocker recovery key.
 
+
+
+## Project showcase · Презентация · 11 languages
+
+[**Visual workflow, international descriptions and contacts**](docs/showcase/README.md)
+
+![Irila_baikal_v1.0 workflow](docs/showcase/overview.svg)
