@@ -18,9 +18,11 @@
   "display_mode": "interface",
   "status": "Аппаратный запуск подтверждён · испытания продолжаются",
   "repo_url": "https://github.com/musikfed/Irila_baikal_v1.0",
-  "screenshots": [],
+  "screenshots": [
+    "vitrine/screenshots/desktop.png"
+  ],
   "cover": "vitrine/generated/cover.svg",
   "cover_type": "schematic-not-screenshot",
-  "screenshot_source": "pending-browser-render",
+  "screenshot_source": "browser-rendered-static",
   "screenshot_origin": "ui/web/index.html"
 }
