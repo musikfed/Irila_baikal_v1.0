@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "id": "Irila_baikal_v1.0",
+  "title": "Irila_baikal_v1.0",
+  "version": "—",
+  "description": "«Ирина Байкал 1.0» действительно загрузилась на Acer Swift 3 SF314-41 с Secure Boot. Архив из 18 реальных фотографий подтверждает запуск XFCE/Xorg, фирменного интерфейса, файлового менеджера, терминала; корень /dev/sdb2 автоматически расширен до 235 ГиБ на внешнем SSD. Прежняя ошибка Casper/kernel panic преодолена. Wi-Fi/веб-камера и установка допо",
+  "subtitle": null,
+  "tags": [
+    "Shell"
+  ],
+  "visibility": "public",
+  "publication": "publish_on_merge",
+  "public_private_approved": false,
+  "display_mode": "interface",
+  "status": "Черновик — ожидает проверки",
+  "repo_url": "https://github.com/musikfed/Irila_baikal_v1.0",
+  "screenshots": [
+    "https://raw.githubusercontent.com/musikfed/Irila_baikal_v1.0/main/docs/showcase/overview.svg"
+  ],
+  "cover": "vitrine/generated/cover.svg",
+  "cover_type": "schematic-not-screenshot"
+}
