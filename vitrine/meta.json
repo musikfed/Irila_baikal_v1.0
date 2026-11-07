@@ -1,22 +1,26 @@
 {
   "schema_version": "1.0",
   "id": "Irila_baikal_v1.0",
-  "title": "Irila_baikal_v1.0",
-  "version": "—",
-  "description": "«Ирина Байкал 1.0» действительно загрузилась на Acer Swift 3 SF314-41 с Secure Boot. Архив из 18 реальных фотографий подтверждает запуск XFCE/Xorg, фирменного интерфейса, файлового менеджера, терминала; корень /dev/sdb2 автоматически расширен до 235 ГиБ на внешнем SSD. Прежняя ошибка Casper/kernel panic преодолена. Wi-Fi/веб-камера и установка допо",
-  "subtitle": null,
+  "title": "Ирина Байкал 1.0",
+  "version": "1.0",
+  "description": "Экспериментальная ОС на базе Ubuntu с авторской оболочкой «Ирина Байкал». Первый запуск на Acer Swift 3 с Secure Boot подтверждён. Работают XFCE/Xorg, файловый менеджер и терминал; Wi-Fi, веб-камера и дополнительные приложения ещё проходят проверку.",
+  "subtitle": "Экспериментальная Linux-система с собственной графической оболочкой",
   "tags": [
+    "Linux",
+    "Ubuntu",
+    "Secure Boot",
+    "XFCE",
     "Shell"
   ],
   "visibility": "public",
   "publication": "publish_on_merge",
   "public_private_approved": false,
   "display_mode": "interface",
-  "status": "Черновик — ожидает проверки",
+  "status": "Аппаратный запуск подтверждён · испытания продолжаются",
   "repo_url": "https://github.com/musikfed/Irila_baikal_v1.0",
-  "screenshots": [
-    "https://raw.githubusercontent.com/musikfed/Irila_baikal_v1.0/main/docs/showcase/overview.svg"
-  ],
+  "screenshots": [],
   "cover": "vitrine/generated/cover.svg",
-  "cover_type": "schematic-not-screenshot"
+  "cover_type": "schematic-not-screenshot",
+  "screenshot_source": "pending-browser-render",
+  "screenshot_origin": "ui/web/index.html"
 }
